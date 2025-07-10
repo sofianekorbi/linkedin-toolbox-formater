@@ -8952,3 +8952,12 @@ node_modules/yocto-queue/index.js
 node_modules/yocto-queue/license
 node_modules/yocto-queue/package.json
 node_modules/yocto-queue/readme.md
+dist/manifest.json
+dist/assets/icon16.png
+dist/assets/icon32.png
+dist/assets/icon48.png
+dist/assets/icon128.png
+dist/assets/icons/icon16.png
+dist/assets/icons/icon32.png
+dist/assets/icons/icon48.png
+dist/assets/icons/icon128.png
