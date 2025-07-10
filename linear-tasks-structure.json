@@ -1,0 +1,289 @@
+{
+  "project": {
+    "name": "LinkedIn Formateur Toolbox",
+    "description": "Extension Chrome pour formater du texte directement sur LinkedIn",
+    "phases": [
+      {
+        "name": "Phase 1: Setup & Core Development",
+        "description": "Configuration de l'environnement et développement des fonctionnalités de base",
+        "duration": "2-3 semaines",
+        "priority": "High",
+        "tasks": [
+          {
+            "title": "Configuration de l'environnement de développement",
+            "description": "Configurer l'environnement local pour le développement d'extension Chrome avec Manifest V3",
+            "priority": "High",
+            "estimate": "1 jour",
+            "labels": ["setup", "environment"],
+            "subtasks": [
+              "Installer les outils de développement Chrome Extension",
+              "Configurer Webpack/Vite pour le build",
+              "Configurer Tailwind CSS",
+              "Créer le script de hot reload"
+            ]
+          },
+          {
+            "title": "Création de la structure de l'extension",
+            "description": "Créer la structure de fichiers et les fichiers de base de l'extension",
+            "priority": "High",
+            "estimate": "1 jour",
+            "labels": ["setup", "structure"],
+            "subtasks": [
+              "Créer manifest.json avec Manifest V3",
+              "Créer la structure des dossiers (content/, background/, assets/)",
+              "Créer les fichiers de base (content.js, background.js, content.css)",
+              "Configurer les permissions Chrome"
+            ]
+          },
+          {
+            "title": "Implémentation de la détection de sélection",
+            "description": "Développer la logique pour détecter la sélection de texte dans les champs LinkedIn",
+            "priority": "High",
+            "estimate": "3 jours",
+            "labels": ["frontend", "core"],
+            "subtasks": [
+              "Détecter la sélection de texte dans les champs de saisie",
+              "Identifier les différents types de champs LinkedIn",
+              "Gérer les événements de sélection et désélection",
+              "Tester la compatibilité avec différents champs LinkedIn"
+            ]
+          },
+          {
+            "title": "Création de la toolbox flottante",
+            "description": "Développer l'interface utilisateur de la toolbox avec les boutons de formatage",
+            "priority": "High",
+            "estimate": "3 jours",
+            "labels": ["frontend", "ui"],
+            "subtasks": [
+              "Créer le composant toolbox flottante",
+              "Positionner la toolbox au-dessus du texte sélectionné",
+              "Créer les 4 boutons de formatage (Gras, Italique, Souligné, Barré)",
+              "Implémenter la fermeture automatique après sélection",
+              "Styliser avec Tailwind CSS"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Phase 2: Formatage & Integration",
+        "description": "Implémentation du formatage Unicode et intégration complète avec LinkedIn",
+        "duration": "2-3 semaines",
+        "priority": "High",
+        "tasks": [
+          {
+            "title": "Implémentation des fonctions de formatage Unicode",
+            "description": "Développer les fonctions de conversion vers les caractères Unicode de LinkedIn",
+            "priority": "High",
+            "estimate": "4 jours",
+            "labels": ["frontend", "core", "unicode"],
+            "subtasks": [
+              "Créer la fonction de formatage Gras (Mathematical Bold)",
+              "Créer la fonction de formatage Italique (Mathematical Italic)",
+              "Créer la fonction de formatage Souligné (combining underline)",
+              "Créer la fonction de formatage Barré (combining strikethrough)",
+              "Tester les conversions Unicode",
+              "Gérer les caractères spéciaux et emojis"
+            ]
+          },
+          {
+            "title": "Intégration avec tous les champs LinkedIn",
+            "description": "Assurer la compatibilité avec tous les types de champs de saisie LinkedIn",
+            "priority": "High",
+            "estimate": "3 jours",
+            "labels": ["frontend", "integration"],
+            "subtasks": [
+              "Tester sur les champs de création de posts",
+              "Tester sur les champs de commentaires",
+              "Tester sur les champs de messages privés",
+              "Tester sur les champs de profil",
+              "Gérer les différences de structure DOM"
+            ]
+          },
+          {
+            "title": "Tests sur différents scénarios",
+            "description": "Tester l'extension dans différents contextes et cas d'usage",
+            "priority": "Medium",
+            "estimate": "2 jours",
+            "labels": ["testing", "qa"],
+            "subtasks": [
+              "Tester la sélection de texte de différentes longueurs",
+              "Tester avec du texte contenant des caractères spéciaux",
+              "Tester la performance avec de longs textes",
+              "Tester l'interaction avec d'autres extensions"
+            ]
+          },
+          {
+            "title": "Gestion des formatages combinés",
+            "description": "Implémenter la possibilité de combiner plusieurs formatages",
+            "priority": "Medium",
+            "estimate": "3 jours",
+            "labels": ["frontend", "core"],
+            "subtasks": [
+              "Permettre la combinaison gras + italique",
+              "Gérer les formatages multiples simultanés",
+              "Reconnaître les formatages existants dans le texte sélectionné",
+              "Afficher visuellement les formatages actifs dans la toolbox"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Phase 3: Polish & Deployment",
+        "description": "Optimisation, finalisation du design et préparation pour le déploiement",
+        "duration": "1-2 semaines",
+        "priority": "Medium",
+        "tasks": [
+          {
+            "title": "Optimisation des performances",
+            "description": "Optimiser les performances de l'extension pour minimiser l'impact sur LinkedIn",
+            "priority": "High",
+            "estimate": "2 jours",
+            "labels": ["performance", "optimization"],
+            "subtasks": [
+              "Optimiser l'injection du content script (<100ms)",
+              "Optimiser l'apparition de la toolbox (<50ms)",
+              "Minimiser l'empreinte mémoire",
+              "Nettoyer automatiquement les event listeners",
+              "Tester l'impact sur les performances LinkedIn"
+            ]
+          },
+          {
+            "title": "Design final et responsive",
+            "description": "Finaliser le design de la toolbox et assurer la compatibilité desktop",
+            "priority": "Medium",
+            "estimate": "2 jours",
+            "labels": ["ui", "design"],
+            "subtasks": [
+              "Finaliser les couleurs compatibles avec LinkedIn",
+              "Optimiser la typography cohérente",
+              "Assurer l'accessibilité (contraste, navigation clavier)",
+              "Ajouter des tooltips descriptifs",
+              "Tester sur différentes résolutions desktop"
+            ]
+          },
+          {
+            "title": "Packaging pour Chrome Web Store",
+            "description": "Préparer l'extension pour la publication sur Chrome Web Store",
+            "priority": "High",
+            "estimate": "2 jours",
+            "labels": ["deployment", "packaging"],
+            "subtasks": [
+              "Créer le package optimisé pour Chrome Web Store",
+              "Créer la version .crx pour installation manuelle",
+              "Minifier et optimiser les assets",
+              "Créer les icônes dans toutes les tailles requises",
+              "Tester le package final"
+            ]
+          },
+          {
+            "title": "Tests finaux et debugging",
+            "description": "Tests complets avant publication et correction des bugs",
+            "priority": "High",
+            "estimate": "2 jours",
+            "labels": ["testing", "debugging"],
+            "subtasks": [
+              "Tests unitaires pour les fonctions de formatage",
+              "Tests d'intégration complets",
+              "Tests de compatibilité Chrome",
+              "Tests sur différentes versions de LinkedIn",
+              "Correction des bugs identifiés"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Phase 4: Publication",
+        "description": "Publication sur Chrome Web Store et lancement",
+        "duration": "1 semaine",
+        "priority": "Medium",
+        "tasks": [
+          {
+            "title": "Publication sur Chrome Web Store",
+            "description": "Publier l'extension sur Chrome Web Store avec tous les éléments requis",
+            "priority": "High",
+            "estimate": "1 jour",
+            "labels": ["deployment", "publication"],
+            "subtasks": [
+              "Créer le compte développeur Chrome Web Store",
+              "Préparer la description détaillée",
+              "Créer les screenshots et images promotionnelles",
+              "Créer la politique de confidentialité",
+              "Soumettre pour review"
+            ]
+          },
+          {
+            "title": "Création du contenu marketing LinkedIn",
+            "description": "Créer le contenu pour promouvoir l'extension sur LinkedIn",
+            "priority": "Medium",
+            "estimate": "1 jour",
+            "labels": ["marketing", "content"],
+            "subtasks": [
+              "Créer des posts LinkedIn de démonstration",
+              "Créer des vidéos de démonstration",
+              "Préparer les messages d'annonce",
+              "Planifier la stratégie de lancement"
+            ]
+          },
+          {
+            "title": "Monitoring initial post-lancement",
+            "description": "Surveiller les premiers retours et métriques après lancement",
+            "priority": "Medium",
+            "estimate": "2 jours",
+            "labels": ["monitoring", "support"],
+            "subtasks": [
+              "Surveiller les reviews Chrome Web Store",
+              "Monitorer les éventuels bugs reportés",
+              "Analyser les premières métriques d'utilisation",
+              "Préparer les corrections urgentes si nécessaire"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "additional_requirements": {
+    "security_tasks": [
+      {
+        "title": "Validation de sécurité",
+        "description": "Vérifier que l'extension respecte les bonnes pratiques de sécurité",
+        "priority": "High",
+        "labels": ["security"],
+        "subtasks": [
+          "Aucune donnée utilisateur collectée",
+          "Aucune donnée transmise à des serveurs externes",
+          "Fonctionnement entièrement local",
+          "Pas de tracking utilisateur",
+          "Pas de collecte de données",
+          "Pas de cookies ou stockage persistant"
+        ]
+      }
+    ],
+    "accessibility_tasks": [
+      {
+        "title": "Accessibilité",
+        "description": "Assurer l'accessibilité de l'extension",
+        "priority": "Medium",
+        "labels": ["accessibility"],
+        "subtasks": [
+          "Boutons accessibles au clavier",
+          "Contraste suffisant pour la visibilité",
+          "Tooltips descriptifs sur les boutons de formatage"
+        ]
+      }
+    ],
+    "documentation_tasks": [
+      {
+        "title": "Documentation technique",
+        "description": "Créer la documentation complète du projet",
+        "priority": "Medium",
+        "labels": ["documentation"],
+        "subtasks": [
+          "README.md avec instructions d'installation et développement",
+          "Documentation des fonctions de formatage Unicode",
+          "Instructions de build et packaging",
+          "Instructions d'utilisation simples"
+        ]
+      }
+    ]
+  }
+}
