@@ -1,5 +1,6 @@
 {
   "name": "linkedin-formateur-toolbox",
+  "displayName": "LinkedIn Formateur Toolbox",
   "version": "1.0.0",
   "description": "Extension Chrome pour formater du texte directement sur LinkedIn avec une toolbox flottante",
   "main": "background/background.js",

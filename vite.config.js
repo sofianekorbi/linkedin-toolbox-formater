@@ -1,7 +1,9 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { chromeExtensionPlugin } from './vite-plugin-chrome-extension.js';
 
 export default defineConfig({
+  plugins: [chromeExtensionPlugin()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,
