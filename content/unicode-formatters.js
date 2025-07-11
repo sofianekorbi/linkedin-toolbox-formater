@@ -101,10 +101,59 @@ export function toItalic(text) {
  * @returns {string} - Le texte formaté avec soulignement Unicode
  */
 export function toUnderline(text) {
-  // À implémenter dans LIN-18
-  // Ajout du caractère combining underline (U+0332) après chaque caractère
-  console.log('🔨 toUnderline() - À implémenter dans LIN-18');
-  return text; // Placeholder
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Approche optimale : Mathematical Monospace + Combining Underline
+  // Comme dans ton exemple : 𝚄̲𝚗̲𝚍̲𝚎̲𝚛̲𝚕̲𝚒̲𝚗̲𝚎̲
+  const monospaceMap = {
+    // Lettres majuscules A-Z → Mathematical Monospace (U+1D670-U+1D689)
+    'A': '𝙰', 'B': '𝙱', 'C': '𝙲', 'D': '𝙳', 'E': '𝙴', 'F': '𝙵', 'G': '𝙶', 'H': '𝙷',
+    'I': '𝙸', 'J': '𝙹', 'K': '𝙺', 'L': '𝙻', 'M': '𝙼', 'N': '𝙽', 'O': '𝙾', 'P': '𝙿',
+    'Q': '𝚀', 'R': '𝚁', 'S': '𝚂', 'T': '𝚃', 'U': '𝚄', 'V': '𝚅', 'W': '𝚆', 'X': '𝚇',
+    'Y': '𝚈', 'Z': '𝚉',
+    
+    // Lettres minuscules a-z → Mathematical Monospace (U+1D68A-U+1D6A3)
+    'a': '𝚊', 'b': '𝚋', 'c': '𝚌', 'd': '𝚍', 'e': '𝚎', 'f': '𝚏', 'g': '𝚐', 'h': '𝚑',
+    'i': '𝚒', 'j': '𝚓', 'k': '𝚔', 'l': '𝚕', 'm': '𝚖', 'n': '𝚗', 'o': '𝚘', 'p': '𝚙',
+    'q': '𝚚', 'r': '𝚛', 's': '𝚜', 't': '𝚝', 'u': '𝚞', 'v': '𝚟', 'w': '𝚠', 'x': '𝚡',
+    'y': '𝚢', 'z': '𝚣',
+    
+    // Chiffres 0-9 → Mathematical Monospace (U+1D7F6-U+1D7FF)
+    '0': '𝟶', '1': '𝟷', '2': '𝟸', '3': '𝟹', '4': '𝟺', '5': '𝟻', '6': '𝟼', '7': '𝟽', '8': '𝟾', '9': '𝟿'
+  };
+
+  // Combining underline Unicode (U+0332)
+  const COMBINING_UNDERLINE = '\u0332';
+
+  try {
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const monospaceChar = monospaceMap[char];
+      
+      if (monospaceChar) {
+        // Caractère monospace + combining underline
+        result += monospaceChar + COMBINING_UNDERLINE;
+      } else if (char === ' ') {
+        result += char; // Garder les espaces normaux
+      } else {
+        // Pour les caractères non mappés, utiliser le caractère original + underline
+        result += char + COMBINING_UNDERLINE;
+      }
+    }
+
+    console.log('✅ Texte formaté avec Mathematical Monospace + Underline:', { 
+      original: text, 
+      underlined: result,
+      method: 'monospace_with_combining_underline'
+    });
+    return result;
+  } catch (error) {
+    console.error('❌ Erreur lors du formatage souligné:', error);
+    return text; // Fallback vers le texte original
+  }
 }
 
 /**
@@ -140,12 +189,12 @@ export function detectFormatting(text) {
   // }
   
   // Détection du soulignement (combining underline)
-  // if (text.includes('\u0332')) {
+  // if (text.includes('\\u0332')) {
   //   detectedFormats.push('underline');
   // }
   
   // Détection du barré (combining strikethrough)
-  // if (text.includes('\u0336')) {
+  // if (text.includes('\\u0336')) {
   //   detectedFormats.push('strikethrough');
   // }
   

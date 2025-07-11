@@ -944,6 +944,114 @@ function toBold(text) {
   }
 }
 
+/**
+ * Convertit le texte en caractères Unicode Mathematical Italic
+ * Utilisé pour le formatage *italique* sur LinkedIn  
+ * @param {string} text - Le texte à formater
+ * @returns {string} - Le texte formaté en italique Unicode
+ */
+function toItalic(text) {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Tables de mapping Unicode Mathematical Italic
+  const italicMappings = {
+    // Lettres majuscules A-Z → 𝐴-𝑍 (U+1D434-U+1D44D)
+    'A': '𝐴', 'B': '𝐵', 'C': '𝐶', 'D': '𝐷', 'E': '𝐸', 'F': '𝐹', 'G': '𝐺', 'H': '𝐻',
+    'I': '𝐼', 'J': '𝐽', 'K': '𝐾', 'L': '𝐿', 'M': '𝑀', 'N': '𝑁', 'O': '𝑂', 'P': '𝑃',
+    'Q': '𝑄', 'R': '𝑅', 'S': '𝑆', 'T': '𝑇', 'U': '𝑈', 'V': '𝑉', 'W': '𝑊', 'X': '𝑋',
+    'Y': '𝑌', 'Z': '𝑍',
+    
+    // Lettres minuscules a-z → 𝑎-𝑧 (U+1D44E-U+1D467)
+    'a': '𝑎', 'b': '𝑏', 'c': '𝑐', 'd': '𝑑', 'e': '𝑒', 'f': '𝑓', 'g': '𝑔', 'h': '𝒉',
+    'i': '𝑖', 'j': '𝑗', 'k': '𝑘', 'l': '𝑙', 'm': '𝑚', 'n': '𝑛', 'o': '𝑜', 'p': '𝑝',
+    'q': '𝑞', 'r': '𝑟', 's': '𝑠', 't': '𝑡', 'u': '𝑢', 'v': '𝑣', 'w': '𝑤', 'x': '𝑥',
+    'y': '𝑦', 'z': '𝑧'
+    
+    // Note: Les chiffres n'ont pas d'équivalent italique dans Unicode Mathematical
+    // Ils restent en forme normale
+  };
+
+  try {
+    // Transformer chaque caractère
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const italicChar = italicMappings[char];
+      result += italicChar || char; // Utiliser le caractère italique ou le caractère original
+    }
+
+    console.log('✅ Texte formaté en italique:', { original: text, italic: result });
+    return result;
+  } catch (error) {
+    console.error('❌ Erreur lors du formatage en italique:', error);
+    return text; // Fallback vers le texte original
+  }
+}
+
+/**
+ * Ajoute combining underline aux caractères
+ * Utilisé pour le formatage souligné sur LinkedIn
+ * @param {string} text - Le texte à formater
+ * @returns {string} - Le texte formaté avec soulignement Unicode
+ */
+function toUnderline(text) {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Approche optimale : Mathematical Monospace + Combining Underline
+  // Comme dans ton exemple : 𝚄̲𝚗̲𝚍̲𝚎̲𝚛̲𝚕̲𝚒̲𝚗̲𝚎̲
+  const monospaceMap = {
+    // Lettres majuscules A-Z → Mathematical Monospace (U+1D670-U+1D689)
+    'A': '𝙰', 'B': '𝙱', 'C': '𝙲', 'D': '𝙳', 'E': '𝙴', 'F': '𝙵', 'G': '𝙶', 'H': '𝙷',
+    'I': '𝙸', 'J': '𝙹', 'K': '𝙺', 'L': '𝙻', 'M': '𝙼', 'N': '𝙽', 'O': '𝙾', 'P': '𝙿',
+    'Q': '𝚀', 'R': '𝚁', 'S': '𝚂', 'T': '𝚃', 'U': '𝚄', 'V': '𝚅', 'W': '𝚆', 'X': '𝚇',
+    'Y': '𝚈', 'Z': '𝚉',
+    
+    // Lettres minuscules a-z → Mathematical Monospace (U+1D68A-U+1D6A3)
+    'a': '𝚊', 'b': '𝚋', 'c': '𝚌', 'd': '𝚍', 'e': '𝚎', 'f': '𝚏', 'g': '𝚐', 'h': '𝚑',
+    'i': '𝚒', 'j': '𝚓', 'k': '𝚔', 'l': '𝚕', 'm': '𝚖', 'n': '𝚗', 'o': '𝚘', 'p': '𝚙',
+    'q': '𝚚', 'r': '𝚛', 's': '𝚜', 't': '𝚝', 'u': '𝚞', 'v': '𝚟', 'w': '𝚠', 'x': '𝚡',
+    'y': '𝚢', 'z': '𝚣',
+    
+    // Chiffres 0-9 → Mathematical Monospace (U+1D7F6-U+1D7FF)
+    '0': '𝟶', '1': '𝟷', '2': '𝟸', '3': '𝟹', '4': '𝟺', '5': '𝟻', '6': '𝟼', '7': '𝟽', '8': '𝟾', '9': '𝟿'
+  };
+
+  // Combining underline Unicode (U+0332)
+  const COMBINING_UNDERLINE = '\u0332';
+
+  try {
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const monospaceChar = monospaceMap[char];
+      
+      if (monospaceChar) {
+        // Caractère monospace + combining underline
+        result += monospaceChar + COMBINING_UNDERLINE;
+      } else if (char === ' ') {
+        result += char; // Garder les espaces normaux
+      } else {
+        // Pour les caractères non mappés, utiliser le caractère original + underline
+        result += char + COMBINING_UNDERLINE;
+      }
+    }
+
+    console.log('✅ Texte formaté avec Mathematical Monospace + Underline:', { 
+      original: text, 
+      underlined: result,
+      method: 'monospace_with_combining_underline'
+    });
+    return result;
+  } catch (error) {
+    console.error('❌ Erreur lors du formatage souligné:', error);
+    return text; // Fallback vers le texte original
+  }
+}
+
 console.log("🚀 LinkedIn Formateur Toolbox - Content Script chargé");
 class LinkedInFormatterToolbox {
   constructor() {
@@ -1111,6 +1219,14 @@ class LinkedInFormatterToolbox {
       console.log("🎨 Formatage gras demandé pour:", selectionData.text);
       this.applyFormatting(selectionData, formatType);
     });
+    toolboxUI.addFormatHandler("italic", (selectionData, formatType) => {
+      console.log("🎨 Formatage italique demandé pour:", selectionData.text);
+      this.applyFormatting(selectionData, formatType);
+    });
+    toolboxUI.addFormatHandler("underline", (selectionData, formatType) => {
+      console.log("🎨 Formatage souligné demandé pour:", selectionData.text);
+      this.applyFormatting(selectionData, formatType);
+    });
     console.log("✅ Handlers de formatage enregistrés");
   }
   /**
@@ -1124,12 +1240,10 @@ class LinkedInFormatterToolbox {
           formattedText = toBold(selectionData.text);
           break;
         case "italic":
-          console.log("🔨 Formatage italique - À implémenter");
-          formattedText = selectionData.text;
+          formattedText = toItalic(selectionData.text);
           break;
         case "underline":
-          console.log("🔨 Formatage souligné - À implémenter");
-          formattedText = selectionData.text;
+          formattedText = toUnderline(selectionData.text);
           break;
         case "strikethrough":
           console.log("🔨 Formatage barré - À implémenter");
