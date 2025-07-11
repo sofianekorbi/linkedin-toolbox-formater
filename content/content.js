@@ -3,6 +3,7 @@
 
 import { selectionDetector } from './selection-detector.js';
 import { toolboxUI } from './toolbox.js';
+import { toBold } from './unicode-formatters.js';
 
 console.log('🚀 LinkedIn Formateur Toolbox - Content Script chargé');
 
@@ -41,6 +42,9 @@ class LinkedInFormatterToolbox {
       
       // Ajouter notre handler pour les événements de sélection
       selectionDetector.addSelectionHandler(this.handleSelectionEvent);
+
+      // Enregistrer les handlers de formatage
+      this.registerFormatHandlers();
 
       this.isInitialized = true;
       console.log('✅ LinkedIn Formateur Toolbox initialisé avec succès');
@@ -215,6 +219,139 @@ class LinkedInFormatterToolbox {
         notification.remove();
       }
     }, 3000);
+  }
+
+  /**
+   * Enregistre les handlers de formatage
+   */
+  registerFormatHandlers() {
+    // Handler pour le formatage gras
+    toolboxUI.addFormatHandler('bold', (selectionData, formatType) => {
+      console.log('🎨 Formatage gras demandé pour:', selectionData.text);
+      this.applyFormatting(selectionData, formatType);
+    });
+
+    // TODO: Ajouter handlers pour italic, underline, strikethrough dans LIN-18
+    console.log('✅ Handlers de formatage enregistrés');
+  }
+
+  /**
+   * Applique le formatage au texte sélectionné
+   */
+  applyFormatting(selectionData, formatType) {
+    try {
+      let formattedText;
+
+      // Appliquer le formatage selon le type
+      switch (formatType) {
+        case 'bold':
+          formattedText = toBold(selectionData.text);
+          break;
+        case 'italic':
+          // TODO: Implémenter dans LIN-18
+          console.log('🔨 Formatage italique - À implémenter');
+          formattedText = selectionData.text;
+          break;
+        case 'underline':
+          // TODO: Implémenter dans LIN-18
+          console.log('🔨 Formatage souligné - À implémenter');
+          formattedText = selectionData.text;
+          break;
+        case 'strikethrough':
+          // TODO: Implémenter dans LIN-18
+          console.log('🔨 Formatage barré - À implémenter');
+          formattedText = selectionData.text;
+          break;
+        default:
+          console.warn('⚠️ Type de formatage non supporté:', formatType);
+          formattedText = selectionData.text;
+      }
+
+      // Remplacer le texte sélectionné
+      this.replaceSelectedText(selectionData, formattedText);
+
+    } catch (error) {
+      console.error('❌ Erreur lors du formatage:', error);
+    }
+  }
+
+  /**
+   * Remplace le texte sélectionné dans le champ LinkedIn
+   */
+  replaceSelectedText(selectionData, newText) {
+    try {
+      const field = selectionData.field;
+      const range = selectionData.range;
+
+      console.log('🔄 Remplacement du texte:', {
+        original: selectionData.text,
+        formatted: newText,
+        fieldType: field.tagName
+      });
+
+      // Méthode 1: Pour les éléments contenteditable (posts, commentaires)
+      if (field.contentEditable === 'true') {
+        // Supprimer le contenu sélectionné et insérer le nouveau texte
+        range.deleteContents();
+        const textNode = document.createTextNode(newText);
+        range.insertNode(textNode);
+        
+        // Repositionner le curseur après le texte inséré
+        range.setStartAfter(textNode);
+        range.setEndAfter(textNode);
+        
+        // Effacer la sélection
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        window.getSelection().collapseToEnd();
+
+        // Déclencher les événements pour notifier LinkedIn
+        this.triggerLinkedInEvents(field);
+
+      // Méthode 2: Pour les textarea et input
+      } else if (field.tagName === 'TEXTAREA' || field.tagName === 'INPUT') {
+        const start = field.selectionStart;
+        const end = field.selectionEnd;
+        const value = field.value;
+        
+        // Remplacer le texte sélectionné
+        field.value = value.substring(0, start) + newText + value.substring(end);
+        
+        // Repositionner le curseur
+        const newCursorPos = start + newText.length;
+        field.setSelectionRange(newCursorPos, newCursorPos);
+        
+        // Déclencher les événements
+        this.triggerLinkedInEvents(field);
+
+      } else {
+        console.warn('⚠️ Type de champ non supporté pour le remplacement:', field.tagName);
+      }
+
+      console.log('✅ Texte remplacé avec succès');
+
+    } catch (error) {
+      console.error('❌ Erreur lors du remplacement du texte:', error);
+    }
+  }
+
+  /**
+   * Déclenche les événements nécessaires pour notifier LinkedIn des changements
+   */
+  triggerLinkedInEvents(field) {
+    // Événements de base pour notifier les changements
+    const events = ['input', 'change', 'keyup'];
+    
+    events.forEach(eventType => {
+      const event = new Event(eventType, {
+        bubbles: true,
+        cancelable: true
+      });
+      field.dispatchEvent(event);
+    });
+
+    // Focus sur le champ pour maintenir l'état actif
+    field.focus();
   }
 
   /**

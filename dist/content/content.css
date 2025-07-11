@@ -105,6 +105,18 @@
   --tw-contain-paint:  ;
   --tw-contain-style:  ;
 }
+.ltf-font-bold {
+  font-weight: 700;
+}
+.ltf-italic {
+  font-style: italic;
+}
+.ltf-underline {
+  text-decoration-line: underline;
+}
+.ltf-line-through {
+  text-decoration-line: line-through;
+}
 /* Styles de base pour la toolbox */
 .ltf-toolbox {
   position: fixed;

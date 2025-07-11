@@ -8,10 +8,44 @@
  * @returns {string} - Le texte formaté en gras Unicode
  */
 export function toBold(text) {
-  // À implémenter dans LIN-18
-  // Mapping des caractères vers leurs équivalents Mathematical Bold
-  console.log('🔨 toBold() - À implémenter dans LIN-18');
-  return text; // Placeholder
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Tables de mapping Unicode Mathematical Bold
+  const boldMappings = {
+    // Lettres majuscules A-Z → 𝐀-𝐙 (U+1D400-U+1D419)
+    'A': '𝐀', 'B': '𝐁', 'C': '𝐂', 'D': '𝐃', 'E': '𝐄', 'F': '𝐅', 'G': '𝐆', 'H': '𝐇',
+    'I': '𝐈', 'J': '𝐉', 'K': '𝐊', 'L': '𝐋', 'M': '𝐌', 'N': '𝐍', 'O': '𝐎', 'P': '𝐏',
+    'Q': '𝐐', 'R': '𝐑', 'S': '𝐒', 'T': '𝐓', 'U': '𝐔', 'V': '𝐕', 'W': '𝐖', 'X': '𝐗',
+    'Y': '𝐘', 'Z': '𝐙',
+    
+    // Lettres minuscules a-z → 𝐚-𝐳 (U+1D41A-U+1D433)
+    'a': '𝐚', 'b': '𝐛', 'c': '𝐜', 'd': '𝐝', 'e': '𝐞', 'f': '𝐟', 'g': '𝐠', 'h': '𝐡',
+    'i': '𝐢', 'j': '𝐣', 'k': '𝐤', 'l': '𝐥', 'm': '𝐦', 'n': '𝐧', 'o': '𝐨', 'p': '𝐩',
+    'q': '𝐪', 'r': '𝐫', 's': '𝐬', 't': '𝐭', 'u': '𝐮', 'v': '𝐯', 'w': '𝐰', 'x': '𝐱',
+    'y': '𝐲', 'z': '𝐳',
+    
+    // Chiffres 0-9 → 𝟎-𝟗 (U+1D7CE-U+1D7D7)
+    '0': '𝟎', '1': '𝟏', '2': '𝟐', '3': '𝟑', '4': '𝟒',
+    '5': '𝟓', '6': '𝟔', '7': '𝟕', '8': '𝟖', '9': '𝟗'
+  };
+
+  try {
+    // Transformer chaque caractère
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const boldChar = boldMappings[char];
+      result += boldChar || char; // Utiliser le caractère gras ou le caractère original
+    }
+
+    console.log('✅ Texte formaté en gras:', { original: text, bold: result });
+    return result;
+  } catch (error) {
+    console.error('❌ Erreur lors du formatage en gras:', error);
+    return text; // Fallback vers le texte original
+  }
 }
 
 /**
