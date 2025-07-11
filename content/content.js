@@ -2,6 +2,7 @@
 // Ce script sera injecté sur toutes les pages LinkedIn
 
 import { selectionDetector } from './selection-detector.js';
+import { toolboxUI } from './toolbox.js';
 
 console.log('🚀 LinkedIn Formateur Toolbox - Content Script chargé');
 
@@ -87,8 +88,8 @@ class LinkedInFormatterToolbox {
       placeholder: selectionData.fieldInfo.placeholder.substring(0, 50)
     });
 
-    // TODO: Afficher la toolbox (LIN-17)
-    // this.showToolbox(selectionData);
+    // Afficher la toolbox
+    this.showToolbox(selectionData);
     
     // Pour le développement, afficher une notification visuelle
     if (__DEV__) {
@@ -103,8 +104,8 @@ class LinkedInFormatterToolbox {
     console.log('🗑️ Sélection effacée');
     this.currentSelection = null;
 
-    // TODO: Masquer la toolbox (LIN-17)
-    // this.hideToolbox();
+    // Masquer la toolbox
+    this.hideToolbox();
 
     // Nettoyer les éléments de debug en mode développement
     if (__DEV__) {
@@ -113,19 +114,19 @@ class LinkedInFormatterToolbox {
   }
 
   /**
-   * Affiche la toolbox de formatage (à implémenter dans LIN-17)
+   * Affiche la toolbox de formatage
    */
   showToolbox(selectionData) {
-    // @TODO: Implémenter dans LIN-17
-    console.log('🔨 showToolbox() - À implémenter dans LIN-17');
+    console.log('🎨 Affichage de la toolbox pour la sélection');
+    toolboxUI.show(selectionData);
   }
 
   /**
    * Masque la toolbox de formatage
    */
   hideToolbox() {
-    // @TODO: Implémenter dans LIN-17
-    console.log('🔨 hideToolbox() - À implémenter dans LIN-17');
+    console.log('🎨 Masquage de la toolbox');
+    toolboxUI.hide();
   }
 
   /**
@@ -232,6 +233,9 @@ class LinkedInFormatterToolbox {
     // Nettoyer le détecteur de sélection
     selectionDetector.removeSelectionHandler(this.handleSelectionEvent);
     selectionDetector.destroy();
+
+    // Nettoyer la toolbox
+    toolboxUI.destroy();
 
     // Nettoyer les éléments de debug
     this.clearDebugInfo();
