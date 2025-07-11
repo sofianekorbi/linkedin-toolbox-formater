@@ -55,10 +55,43 @@ export function toBold(text) {
  * @returns {string} - Le texte formaté en italique Unicode
  */
 export function toItalic(text) {
-  // À implémenter dans LIN-18
-  // Mapping des caractères vers leurs équivalents Mathematical Italic
-  console.log('🔨 toItalic() - À implémenter dans LIN-18');
-  return text; // Placeholder
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Tables de mapping Unicode Mathematical Italic
+  const italicMappings = {
+    // Lettres majuscules A-Z → 𝐴-𝑍 (U+1D434-U+1D44D)
+    'A': '𝐴', 'B': '𝐵', 'C': '𝐶', 'D': '𝐷', 'E': '𝐸', 'F': '𝐹', 'G': '𝐺', 'H': '𝐻',
+    'I': '𝐼', 'J': '𝐽', 'K': '𝐾', 'L': '𝐿', 'M': '𝑀', 'N': '𝑁', 'O': '𝑂', 'P': '𝑃',
+    'Q': '𝑄', 'R': '𝑅', 'S': '𝑆', 'T': '𝑇', 'U': '𝑈', 'V': '𝑉', 'W': '𝑊', 'X': '𝑋',
+    'Y': '𝑌', 'Z': '𝑍',
+    
+    // Lettres minuscules a-z → 𝑎-𝑧 (U+1D44E-U+1D467)
+    'a': '𝑎', 'b': '𝑏', 'c': '𝑐', 'd': '𝑑', 'e': '𝑒', 'f': '𝑓', 'g': '𝑔', 'h': '𝒉',
+    'i': '𝑖', 'j': '𝑗', 'k': '𝑘', 'l': '𝑙', 'm': '𝑚', 'n': '𝑛', 'o': '𝑜', 'p': '𝑝',
+    'q': '𝑞', 'r': '𝑟', 's': '𝑠', 't': '𝑡', 'u': '𝑢', 'v': '𝑣', 'w': '𝑤', 'x': '𝑥',
+    'y': '𝑦', 'z': '𝑧'
+    
+    // Note: Les chiffres n'ont pas d'équivalent italique dans Unicode Mathematical
+    // Ils restent en forme normale
+  };
+
+  try {
+    // Transformer chaque caractère
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const italicChar = italicMappings[char];
+      result += italicChar || char; // Utiliser le caractère italique ou le caractère original
+    }
+
+    console.log('✅ Texte formaté en italique:', { original: text, italic: result });
+    return result;
+  } catch (error) {
+    console.error('❌ Erreur lors du formatage en italique:', error);
+    return text; // Fallback vers le texte original
+  }
 }
 
 /**

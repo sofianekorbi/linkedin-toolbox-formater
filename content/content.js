@@ -3,7 +3,7 @@
 
 import { selectionDetector } from './selection-detector.js';
 import { toolboxUI } from './toolbox.js';
-import { toBold } from './unicode-formatters.js';
+import { toBold, toItalic } from './unicode-formatters.js';
 
 console.log('🚀 LinkedIn Formateur Toolbox - Content Script chargé');
 
@@ -231,7 +231,13 @@ class LinkedInFormatterToolbox {
       this.applyFormatting(selectionData, formatType);
     });
 
-    // TODO: Ajouter handlers pour italic, underline, strikethrough dans LIN-18
+    // Handler pour le formatage italique
+    toolboxUI.addFormatHandler('italic', (selectionData, formatType) => {
+      console.log('🎨 Formatage italique demandé pour:', selectionData.text);
+      this.applyFormatting(selectionData, formatType);
+    });
+
+    // TODO: Ajouter handlers pour underline, strikethrough dans LIN-18
     console.log('✅ Handlers de formatage enregistrés');
   }
 
@@ -248,9 +254,7 @@ class LinkedInFormatterToolbox {
           formattedText = toBold(selectionData.text);
           break;
         case 'italic':
-          // TODO: Implémenter dans LIN-18
-          console.log('🔨 Formatage italique - À implémenter');
-          formattedText = selectionData.text;
+          formattedText = toItalic(selectionData.text);
           break;
         case 'underline':
           // TODO: Implémenter dans LIN-18
