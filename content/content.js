@@ -3,7 +3,7 @@
 
 import { selectionDetector } from './selection-detector.js';
 import { toolboxUI } from './toolbox.js';
-import { toBold, toItalic } from './unicode-formatters.js';
+import { toBold, toItalic, toUnderline, toStrikethrough } from './unicode-formatters.js';
 
 console.log('🚀 LinkedIn Formateur Toolbox - Content Script chargé');
 
@@ -237,7 +237,18 @@ class LinkedInFormatterToolbox {
       this.applyFormatting(selectionData, formatType);
     });
 
-    // TODO: Ajouter handlers pour underline, strikethrough dans LIN-18
+    // Handler pour le formatage souligné
+    toolboxUI.addFormatHandler('underline', (selectionData, formatType) => {
+      console.log('🎨 Formatage souligné demandé pour:', selectionData.text);
+      this.applyFormatting(selectionData, formatType);
+    });
+
+    // Handler pour le formatage barré
+    toolboxUI.addFormatHandler('strikethrough', (selectionData, formatType) => {
+      console.log('🎨 Formatage barré demandé pour:', selectionData.text);
+      this.applyFormatting(selectionData, formatType);
+    });
+
     console.log('✅ Handlers de formatage enregistrés');
   }
 
@@ -257,14 +268,10 @@ class LinkedInFormatterToolbox {
           formattedText = toItalic(selectionData.text);
           break;
         case 'underline':
-          // TODO: Implémenter dans LIN-18
-          console.log('🔨 Formatage souligné - À implémenter');
-          formattedText = selectionData.text;
+          formattedText = toUnderline(selectionData.text);
           break;
         case 'strikethrough':
-          // TODO: Implémenter dans LIN-18
-          console.log('🔨 Formatage barré - À implémenter');
-          formattedText = selectionData.text;
+          formattedText = toStrikethrough(selectionData.text);
           break;
         default:
           console.warn('⚠️ Type de formatage non supporté:', formatType);

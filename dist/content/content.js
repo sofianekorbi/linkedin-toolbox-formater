@@ -1052,6 +1052,47 @@ function toUnderline(text) {
   }
 }
 
+/**
+ * Ajoute combining strikethrough aux caractères
+ * Utilisé pour le formatage barré sur LinkedIn
+ * @param {string} text - Le texte à formater
+ * @returns {string} - Le texte formaté avec strikethrough Unicode
+ */
+function toStrikethrough(text) {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Combining strikethrough Unicode (U+0336)
+  const COMBINING_STRIKETHROUGH = '\u0336';
+
+  try {
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      
+      // Ajouter le caractère
+      result += char;
+      
+      // Ajouter le combining strikethrough seulement pour les caractères visibles
+      // (pas pour les espaces, retours à la ligne, etc.)
+      if (char.trim() !== '' && !char.match(/\s/)) {
+        result += COMBINING_STRIKETHROUGH;
+      }
+    }
+
+    console.log('✅ Texte formaté avec strikethrough:', { 
+      original: text, 
+      strikethrough: result,
+      method: 'combining_strikethrough'
+    });
+    return result;
+  } catch (error) {
+    console.error('❌ Erreur lors du formatage barré:', error);
+    return text; // Fallback vers le texte original
+  }
+}
+
 console.log("🚀 LinkedIn Formateur Toolbox - Content Script chargé");
 class LinkedInFormatterToolbox {
   constructor() {
@@ -1227,6 +1268,10 @@ class LinkedInFormatterToolbox {
       console.log("🎨 Formatage souligné demandé pour:", selectionData.text);
       this.applyFormatting(selectionData, formatType);
     });
+    toolboxUI.addFormatHandler("strikethrough", (selectionData, formatType) => {
+      console.log("🎨 Formatage barré demandé pour:", selectionData.text);
+      this.applyFormatting(selectionData, formatType);
+    });
     console.log("✅ Handlers de formatage enregistrés");
   }
   /**
@@ -1246,8 +1291,7 @@ class LinkedInFormatterToolbox {
           formattedText = toUnderline(selectionData.text);
           break;
         case "strikethrough":
-          console.log("🔨 Formatage barré - À implémenter");
-          formattedText = selectionData.text;
+          formattedText = toStrikethrough(selectionData.text);
           break;
         default:
           console.warn("⚠️ Type de formatage non supporté:", formatType);

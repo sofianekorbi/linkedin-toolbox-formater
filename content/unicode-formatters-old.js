@@ -105,49 +105,43 @@ export function toUnderline(text) {
     return text;
   }
 
-  // Approche optimale : Mathematical Monospace + Combining Underline
-  // Comme dans ton exemple : 𝚄̲𝚗̲𝚍̲𝚎̲𝚛̲𝚕̲𝚒̲𝚗̲𝚎̲
-  const monospaceMap = {
-    // Lettres majuscules A-Z → Mathematical Monospace (U+1D670-U+1D689)
-    'A': '𝙰', 'B': '𝙱', 'C': '𝙲', 'D': '𝙳', 'E': '𝙴', 'F': '𝙵', 'G': '𝙶', 'H': '𝙷',
-    'I': '𝙸', 'J': '𝙹', 'K': '𝙺', 'L': '𝙻', 'M': '𝙼', 'N': '𝙽', 'O': '𝙾', 'P': '𝙿',
-    'Q': '𝚀', 'R': '𝚁', 'S': '𝚂', 'T': '𝚃', 'U': '𝚄', 'V': '𝚅', 'W': '𝚆', 'X': '𝚇',
-    'Y': '𝚈', 'Z': '𝚉',
+  // Approche finale : utiliser des caractères spéciaux qui ressemblent aux lettres soulignées
+  // Ces caractères ne sont pas des combining characters mais des caractères uniques
+  const underlineMap = {
+    // Utiliser des caractères similaires ou des alternatives créatives
+    'a': 'ạ', 'b': 'ḅ', 'c': 'ç', 'd': 'ḍ', 'e': 'ẹ', 'f': 'f̱', 'g': 'ḡ', 'h': 'ḥ',
+    'i': 'ị', 'j': 'j̱', 'k': 'ḳ', 'l': 'ḷ', 'm': 'ṃ', 'n': 'ṇ', 'o': 'ọ', 'p': 'p̱',
+    'q': 'q̱', 'r': 'ṛ', 's': 'ṣ', 't': 'ṭ', 'u': 'ụ', 'v': 'ṽ', 'w': 'w̱', 'x': 'x̱',
+    'y': 'ỵ', 'z': 'ẓ',
     
-    // Lettres minuscules a-z → Mathematical Monospace (U+1D68A-U+1D6A3)
-    'a': '𝚊', 'b': '𝚋', 'c': '𝚌', 'd': '𝚍', 'e': '𝚎', 'f': '𝚏', 'g': '𝚐', 'h': '𝚑',
-    'i': '𝚒', 'j': '𝚓', 'k': '𝚔', 'l': '𝚕', 'm': '𝚖', 'n': '𝚗', 'o': '𝚘', 'p': '𝚙',
-    'q': '𝚚', 'r': '𝚛', 's': '𝚜', 't': '𝚝', 'u': '𝚞', 'v': '𝚟', 'w': '𝚠', 'x': '𝚡',
-    'y': '𝚢', 'z': '𝚣',
+    'A': 'A̱', 'B': 'Ḇ', 'C': 'C̱', 'D': 'Ḍ', 'E': 'Ẹ', 'F': 'F̱', 'G': 'G̱', 'H': 'Ḥ',
+    'I': 'Ị', 'J': 'J̱', 'K': 'Ḳ', 'L': 'Ḷ', 'M': 'Ṃ', 'N': 'Ṇ', 'O': 'Ọ', 'P': 'P̱',
+    'Q': 'Q̱', 'R': 'Ṛ', 'S': 'Ṣ', 'T': 'Ṭ', 'U': 'Ụ', 'V': 'Ṽ', 'W': 'W̱', 'X': 'X̱',
+    'Y': 'Ỵ', 'Z': 'Ẓ',
     
-    // Chiffres 0-9 → Mathematical Monospace (U+1D7F6-U+1D7FF)
-    '0': '𝟶', '1': '𝟷', '2': '𝟸', '3': '𝟹', '4': '𝟺', '5': '𝟻', '6': '𝟼', '7': '𝟽', '8': '𝟾', '9': '𝟿'
+    '0': '0̱', '1': '1̱', '2': '2̱', '3': '3̱', '4': '4̱', '5': '5̱', '6': '6̱', '7': '7̱', '8': '8̱', '9': '9̱'
   };
-
-  // Combining underline Unicode (U+0332)
-  const COMBINING_UNDERLINE = '\u0332';
 
   try {
     let result = '';
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
-      const monospaceChar = monospaceMap[char];
+      const underlinedChar = underlineMap[char];
       
-      if (monospaceChar) {
-        // Caractère monospace + combining underline
-        result += monospaceChar + COMBINING_UNDERLINE;
+      if (underlinedChar) {
+        result += underlinedChar;
       } else if (char === ' ') {
-        result += char; // Garder les espaces normaux
+        result += ' '; // Garder les espaces normaux
       } else {
-        // Pour les caractères non mappés, utiliser le caractère original + underline
-        result += char + COMBINING_UNDERLINE;
+        // Pour les caractères non mappés, utiliser le caractère original
+        result += char;
       }
     }
 
-    console.log('✅ Texte formaté avec Mathematical Monospace + Underline:', { 
+    console.log('✅ Texte formaté avec caractères spéciaux soulignés:', { 
       original: text, 
       underlined: result,
-      method: 'monospace_with_combining_underline'
+      method: 'special_underlined_characters'
     });
     return result;
   } catch (error) {
@@ -163,38 +157,10 @@ export function toUnderline(text) {
  * @returns {string} - Le texte formaté avec strikethrough Unicode
  */
 export function toStrikethrough(text) {
-  if (!text || typeof text !== 'string') {
-    return text;
-  }
-
-  // Combining strikethrough Unicode (U+0336)
-  const COMBINING_STRIKETHROUGH = '\u0336';
-
-  try {
-    let result = '';
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      
-      // Ajouter le caractère
-      result += char;
-      
-      // Ajouter le combining strikethrough seulement pour les caractères visibles
-      // (pas pour les espaces, retours à la ligne, etc.)
-      if (char.trim() !== '' && !char.match(/\s/)) {
-        result += COMBINING_STRIKETHROUGH;
-      }
-    }
-
-    console.log('✅ Texte formaté avec strikethrough:', { 
-      original: text, 
-      strikethrough: result,
-      method: 'combining_strikethrough'
-    });
-    return result;
-  } catch (error) {
-    console.error('❌ Erreur lors du formatage barré:', error);
-    return text; // Fallback vers le texte original
-  }
+  // À implémenter dans LIN-18
+  // Ajout du caractère combining strikethrough après chaque caractère
+  console.log('🔨 toStrikethrough() - À implémenter dans LIN-18');
+  return text; // Placeholder
 }
 
 /**
@@ -217,12 +183,12 @@ export function detectFormatting(text) {
   // }
   
   // Détection du soulignement (combining underline)
-  // if (text.includes('\\u0332')) {
+  // if (text.includes('\u0332')) {
   //   detectedFormats.push('underline');
   // }
   
   // Détection du barré (combining strikethrough)
-  // if (text.includes('\\u0336')) {
+  // if (text.includes('\u0336')) {
   //   detectedFormats.push('strikethrough');
   // }
   
