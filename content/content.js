@@ -4,6 +4,7 @@
 import { selectionDetector } from './selection-detector.js';
 import { toolboxUI } from './toolbox.js';
 import { toBold, toItalic, toUnderline, toStrikethrough } from './unicode-formatters.js';
+import { LinkedInFieldAnalyzer } from './field-analyzer.js';
 
 console.log('🚀 LinkedIn Formateur Toolbox - Content Script chargé');
 
@@ -393,10 +394,43 @@ class LinkedInFormatterToolbox {
 
     console.log('🧹 LinkedIn Formateur Toolbox nettoyé');
   }
+
+  /**
+   * Lance l'analyse des champs LinkedIn (LIN-19)
+   */
+  async analyzeLinkedInFields() {
+    console.log('🔍 Lancement de l\'analyse des champs LinkedIn (LIN-19)...');
+    
+    const analyzer = new LinkedInFieldAnalyzer();
+    await analyzer.analyzeCurrentPage();
+    
+    // Exposer l'analyseur globalement pour les tests manuels
+    window.linkedInAnalyzer = analyzer;
+    
+    console.log('✅ Analyse terminée. Utilisez window.linkedInAnalyzer pour plus de détails');
+    return analyzer;
+  }
+
+  /**
+   * Lance des tests automatiques sur tous les champs (LIN-19)
+   */
+  async testAllFields() {
+    console.log('🧪 Lancement des tests automatiques sur tous les champs...');
+    
+    const analyzer = new LinkedInFieldAnalyzer();
+    await analyzer.analyzeCurrentPage();
+    const results = await analyzer.runAutomaticTests();
+    
+    console.log('✅ Tests automatiques terminés');
+    return results;
+  }
 }
 
 // Initialisation automatique
 const toolbox = new LinkedInFormatterToolbox();
+
+// Exposer globalement pour les tests et debugging (LIN-19)
+window.linkedInFormatterToolbox = toolbox;
 
 // Initialiser quand le DOM est prêt
 if (document.readyState === 'loading') {
