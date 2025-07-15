@@ -3,7 +3,7 @@
 
 import { selectionDetector } from './selection-detector.js';
 import { toolboxUI } from './toolbox.js';
-import { toBold, toItalic, toUnderline, toStrikethrough, detectFormatting } from './unicode-formatters.js';
+import { toBold, toItalic, toUnderline, toStrikethrough, toNormal, detectFormatting, applyIncrementalFormatting } from './unicode-formatters.js';
 import { LinkedInFieldAnalyzer } from './field-analyzer.js';
 
 console.log('🚀 LinkedIn Formateur Toolbox - Content Script chargé');
@@ -261,30 +261,18 @@ class LinkedInFormatterToolbox {
   }
 
   /**
-   * Applique le formatage au texte sélectionné
+   * Applique le formatage au texte sélectionné avec comportement simplifié
    */
   applyFormatting(selectionData, formatType) {
     try {
-      let formattedText;
-
-      // Appliquer le formatage selon le type
-      switch (formatType) {
-        case 'bold':
-          formattedText = toBold(selectionData.text);
-          break;
-        case 'italic':
-          formattedText = toItalic(selectionData.text);
-          break;
-        case 'underline':
-          formattedText = toUnderline(selectionData.text);
-          break;
-        case 'strikethrough':
-          formattedText = toStrikethrough(selectionData.text);
-          break;
-        default:
-          console.warn('⚠️ Type de formatage non supporté:', formatType);
-          formattedText = selectionData.text;
-      }
+      const existingFormats = selectionData.existingFormats || [];
+      
+      // Utiliser la logique simplifiée pour tous les cas
+      const formattedText = applyIncrementalFormatting(
+        selectionData.text, 
+        existingFormats, 
+        formatType
+      );
 
       // Remplacer le texte sélectionné
       this.replaceSelectedText(selectionData, formattedText);

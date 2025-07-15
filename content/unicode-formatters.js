@@ -198,6 +198,96 @@ export function toStrikethrough(text) {
 }
 
 /**
+ * Convertit un texte formaté vers sa forme normale
+ * @param {string} text - Le texte formaté à normaliser
+ * @returns {string} - Le texte en forme normale
+ */
+export function toNormal(text) {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  try {
+    let result = '';
+    
+    // Tables de reverse mapping pour chaque formatage
+    const reverseMapping = {
+      // Mathematical Bold → Normal
+      '𝐀': 'A', '𝐁': 'B', '𝐂': 'C', '𝐃': 'D', '𝐄': 'E', '𝐅': 'F', '𝐆': 'G', '𝐇': 'H',
+      '𝐈': 'I', '𝐉': 'J', '𝐊': 'K', '𝐋': 'L', '𝐌': 'M', '𝐍': 'N', '𝐎': 'O', '𝐏': 'P',
+      '𝐐': 'Q', '𝐑': 'R', '𝐒': 'S', '𝐓': 'T', '𝐔': 'U', '𝐕': 'V', '𝐖': 'W', '𝐗': 'X',
+      '𝐘': 'Y', '𝐙': 'Z',
+      '𝐚': 'a', '𝐛': 'b', '𝐜': 'c', '𝐝': 'd', '𝐞': 'e', '𝐟': 'f', '𝐠': 'g', '𝐡': 'h',
+      '𝐢': 'i', '𝐣': 'j', '𝐤': 'k', '𝐥': 'l', '𝐦': 'm', '𝐧': 'n', '𝐨': 'o', '𝐩': 'p',
+      '𝐪': 'q', '𝐫': 'r', '𝐬': 's', '𝐭': 't', '𝐮': 'u', '𝐯': 'v', '𝐰': 'w', '𝐱': 'x',
+      '𝐲': 'y', '𝐳': 'z',
+      '𝟎': '0', '𝟏': '1', '𝟐': '2', '𝟑': '3', '𝟒': '4', '𝟓': '5', '𝟔': '6', '𝟕': '7', '𝟖': '8', '𝟗': '9',
+      
+      // Mathematical Sans-Serif Italic → Normal
+      '𝘈': 'A', '𝘉': 'B', '𝘊': 'C', '𝘋': 'D', '𝘌': 'E', '𝘍': 'F', '𝘎': 'G', '𝘏': 'H',
+      '𝘐': 'I', '𝘑': 'J', '𝘒': 'K', '𝘓': 'L', '𝘔': 'M', '𝘕': 'N', '𝘖': 'O', '𝘗': 'P',
+      '𝘘': 'Q', '𝘙': 'R', '𝘚': 'S', '𝘛': 'T', '𝘜': 'U', '𝘝': 'V', '𝘞': 'W', '𝘟': 'X',
+      '𝘠': 'Y', '𝘡': 'Z',
+      '𝘢': 'a', '𝘣': 'b', '𝘤': 'c', '𝘥': 'd', '𝘦': 'e', '𝘧': 'f', '𝘨': 'g', '𝘩': 'h',
+      '𝘪': 'i', '𝘫': 'j', '𝘬': 'k', '𝘭': 'l', '𝘮': 'm', '𝘯': 'n', '𝘰': 'o', '𝘱': 'p',
+      '𝘲': 'q', '𝘳': 'r', '𝘴': 's', '𝘵': 't', '𝘶': 'u', '𝘷': 'v', '𝘸': 'w', '𝘹': 'x',
+      '𝘺': 'y', '𝘻': 'z',
+      
+      // Mathematical Monospace → Normal
+      '𝙰': 'A', '𝙱': 'B', '𝙲': 'C', '𝙳': 'D', '𝙴': 'E', '𝙵': 'F', '𝙶': 'G', '𝙷': 'H',
+      '𝙸': 'I', '𝙹': 'J', '𝙺': 'K', '𝙻': 'L', '𝙼': 'M', '𝙽': 'N', '𝙾': 'O', '𝙿': 'P',
+      '𝚀': 'Q', '𝚁': 'R', '𝚂': 'S', '𝚃': 'T', '𝚄': 'U', '𝚅': 'V', '𝚆': 'W', '𝚇': 'X',
+      '𝚈': 'Y', '𝚉': 'Z',
+      '𝚊': 'a', '𝚋': 'b', '𝚌': 'c', '𝚍': 'd', '𝚎': 'e', '𝚏': 'f', '𝚐': 'g', '𝚑': 'h',
+      '𝚒': 'i', '𝚓': 'j', '𝚔': 'k', '𝚕': 'l', '𝚖': 'm', '𝚗': 'n', '𝚘': 'o', '𝚙': 'p',
+      '𝚚': 'q', '𝚛': 'r', '𝚜': 's', '𝚝': 't', '𝚞': 'u', '𝚟': 'v', '𝚠': 'w', '𝚡': 'x',
+      '𝚢': 'y', '𝚣': 'z',
+      '𝟶': '0', '𝟷': '1', '𝟸': '2', '𝟹': '3', '𝟺': '4', '𝟻': '5', '𝟼': '6', '𝟽': '7', '𝟾': '8', '𝟿': '9'
+    };
+
+    // Combining characters à supprimer
+    const COMBINING_UNDERLINE = '\u0332';
+    const COMBINING_STRIKETHROUGH = '\u0336';
+
+    // Parcourir chaque caractère Unicode réel (pas code unit)
+    for (const char of text) {
+      // Debug: afficher chaque caractère
+      console.log(`🔍 Caractère: '${char}' (U+${char.codePointAt(0).toString(16).toUpperCase()})`);
+      
+      // Ignorer les combining characters
+      if (char === COMBINING_UNDERLINE || char === COMBINING_STRIKETHROUGH) {
+        console.log(`  ↪ Combining character ignoré`);
+        continue;
+      }
+      
+      // Convertir vers la forme normale si mapping existe
+      const normalChar = reverseMapping[char];
+      if (normalChar) {
+        console.log(`  ↪ Conversion: '${char}' → '${normalChar}'`);
+        result += normalChar;
+      } else {
+        console.log(`  ↪ Pas de mapping, caractère conservé: '${char}'`);
+        result += char;
+      }
+    }
+
+    console.log('✅ Texte normalisé:', { 
+      original: text.substring(0, 20) + '...', 
+      normalized: result.substring(0, 20) + '...',
+      originalLength: text.length,
+      normalizedLength: result.length,
+      changed: text !== result
+    });
+    
+    return result;
+
+  } catch (error) {
+    console.error('❌ Erreur lors de la normalisation:', error);
+    return text;
+  }
+}
+
+/**
  * Détecte le type de formatage appliqué à un texte
  * @param {string} text - Le texte à analyser
  * @returns {Array<string>} - Liste des formatages détectés
@@ -236,8 +326,9 @@ export function detectFormatting(text) {
       detectedFormats.push('italic');
     }
 
-    // Détection du soulignement (combining underline)
-    if (text.includes(COMBINING_UNDERLINE)) {
+    // Détection du soulignement (monospace + combining underline)
+    // toUnderline() utilise monospace + combining underline, donc on détecte les deux
+    if (text.includes(COMBINING_UNDERLINE) || unicodeRanges.monospace.test(text)) {
       detectedFormats.push('underline');
     }
 
@@ -248,7 +339,14 @@ export function detectFormatting(text) {
 
     console.log('🔍 Formatages détectés:', { 
       text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
-      detected: detectedFormats 
+      detected: detectedFormats,
+      debug: {
+        boldMatch: unicodeRanges.bold.test(text),
+        italicMatch: unicodeRanges.italic.test(text),
+        monospaceMatch: unicodeRanges.monospace.test(text),
+        combiningUnderline: text.includes(COMBINING_UNDERLINE),
+        combiningStrikethrough: text.includes(COMBINING_STRIKETHROUGH)
+      }
     });
 
     return detectedFormats;
@@ -260,46 +358,87 @@ export function detectFormatting(text) {
 }
 
 /**
- * Combine plusieurs formatages sur un même texte
+ * Applique un formatage simple avec toggle off et remplacement
  * @param {string} text - Le texte à formater
- * @param {Array<string>} formats - Liste des formatages à appliquer
- * @returns {string} - Le texte avec formatages combinés
+ * @param {Array<string>} existingFormats - Liste des formatages déjà appliqués
+ * @param {string} newFormat - Le nouveau formatage à appliquer
+ * @returns {string} - Le texte avec le nouveau formatage appliqué
  */
-export function combineFormatting(text, formats) {
-  // À implémenter dans LIN-21 (formatages combinés)
-  let formattedText = text;
-  
-  // Appliquer les formatages dans l'ordre optimal
-  // 1. D'abord les transformations de caractères (gras, italique)
-  // 2. Ensuite les combining characters (soulignement, barré)
-  
-  console.log('🔨 combineFormatting() - À implémenter dans LIN-21');
-  return formattedText;
+export function applyIncrementalFormatting(text, existingFormats, newFormat) {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  if (!existingFormats || !Array.isArray(existingFormats)) {
+    existingFormats = [];
+  }
+
+  if (!newFormat || typeof newFormat !== 'string') {
+    return text;
+  }
+
+  try {
+    console.log('🔄 applyIncrementalFormatting() appelée:', {
+      text: text.substring(0, 20) + '...',
+      existingFormats: existingFormats,
+      newFormat: newFormat
+    });
+
+    // 1. TOGGLE OFF: Si le formatage est déjà appliqué, revenir au texte normal
+    if (existingFormats.includes(newFormat)) {
+      console.log(`🔄 Toggle OFF: Formatage '${newFormat}' déjà appliqué, conversion vers texte normal`);
+      const normalizedText = toNormal(text);
+      console.log('🔄 Toggle OFF result:', { original: text.substring(0, 20) + '...', normalized: normalizedText.substring(0, 20) + '...' });
+      return normalizedText;
+    }
+
+    // 2. REMPLACEMENT: Si un autre formatage existe, le remplacer (pas de combinaison)
+    if (existingFormats.length > 0) {
+      console.log(`🔄 Remplacement: ${existingFormats.join(',')} → ${newFormat}`);
+      
+      // Normaliser d'abord le texte, puis appliquer le nouveau formatage
+      const normalizedText = toNormal(text);
+      console.log('🔄 Remplacement - après normalisation:', { original: text.substring(0, 20) + '...', normalized: normalizedText.substring(0, 20) + '...' });
+      const formattedText = applySimpleFormatting(normalizedText, newFormat);
+      console.log('🔄 Remplacement - après formatage:', { normalized: normalizedText.substring(0, 20) + '...', formatted: formattedText.substring(0, 20) + '...' });
+      return formattedText;
+    }
+
+    // 3. FORMATAGE SIMPLE: Aucun formatage existant, appliquer le nouveau
+    console.log(`🆕 Formatage simple: ${newFormat}`);
+    const formattedText = applySimpleFormatting(text, newFormat);
+    console.log('🆕 Formatage simple result:', { original: text.substring(0, 20) + '...', formatted: formattedText.substring(0, 20) + '...' });
+    return formattedText;
+
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'application incrémentale:', error);
+    return text;
+  }
 }
 
 /**
- * Utilitaire pour mapper un caractère vers son équivalent Unicode
- * @param {string} char - Le caractère à mapper
- * @param {string} type - Le type de formatage ('bold', 'italic')
- * @returns {string} - Le caractère Unicode correspondant
+ * Applique un formatage simple à un texte normal
+ * @param {string} text - Le texte à formater
+ * @param {string} formatType - Le type de formatage ('bold', 'italic', 'underline', 'strikethrough')
+ * @returns {string} - Le texte formaté
  */
-export function mapCharacter(char, type) {
-  // Tables de mapping à implémenter dans LIN-18
-  const mappings = {
-    bold: {
-      // A-Z: U+1D400-U+1D419
-      // a-z: U+1D41A-U+1D433  
-      // 0-9: U+1D7CE-U+1D7D7
-    },
-    italic: {
-      // A-Z: U+1D434-U+1D44D
-      // a-z: U+1D44E-U+1D467
-    }
-  };
-  
-  console.log('🔨 mapCharacter() - À implémenter dans LIN-18');
-  return char; // Placeholder
+function applySimpleFormatting(text, formatType) {
+  switch (formatType) {
+    case 'bold':
+      return toBold(text);
+    case 'italic':
+      return toItalic(text);
+    case 'underline':
+      return toUnderline(text);
+    case 'strikethrough':
+      return toStrikethrough(text);
+    default:
+      console.warn('⚠️ Type de formatage non supporté:', formatType);
+      return text;
+  }
 }
+
+
 
 // Export de toutes les fonctions pour utilisation dans content.js
 export const formatters = {
@@ -307,7 +446,7 @@ export const formatters = {
   toItalic,
   toUnderline,
   toStrikethrough,
+  toNormal,
   detectFormatting,
-  combineFormatting,
-  mapCharacter
+  applyIncrementalFormatting
 };
