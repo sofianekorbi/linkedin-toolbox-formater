@@ -79,7 +79,6 @@ class ToolboxUI {
    * Initialise la toolbox
    */
   init() {
-    console.log('🎨 Initialisation de ToolboxUI...');
     
     // Créer l'élément toolbox
     this.createToolboxElement();
@@ -88,7 +87,6 @@ class ToolboxUI {
     document.addEventListener('click', this.handleDocumentClick, true);
     document.addEventListener('keydown', this.handleKeyDown, true);
     
-    console.log('✅ ToolboxUI initialisé');
   }
 
   /**
@@ -219,10 +217,6 @@ class ToolboxUI {
     this.currentSelection = selectionData;
     this.isVisible = true;
 
-    console.log('🎨 Affichage de la toolbox pour:', {
-      text: selectionData.text.substring(0, 30) + '...',
-      field: selectionData.fieldInfo.tagName
-    });
 
     // Calculer la position
     const position = this.calculatePosition(selectionData);
@@ -300,7 +294,6 @@ class ToolboxUI {
     this.isVisible = false;
     this.isAnimating = true;
 
-    console.log('🎨 Masquage de la toolbox');
 
     // Animation fade-out
     this.toolboxElement.style.opacity = '0';
@@ -324,7 +317,6 @@ class ToolboxUI {
     const button = event.currentTarget;
     const formatType = button.getAttribute('data-format');
 
-    console.log('🎨 Clic sur bouton:', formatType);
 
     // Ajouter effet visuel de clic
     button.style.backgroundColor = '#e1e5e9';
@@ -345,7 +337,6 @@ class ToolboxUI {
   triggerFormatting(formatType) {
     if (!this.currentSelection) return;
 
-    console.log('🎨 Déclenchement formatage:', formatType);
 
     // Notifier les handlers enregistrés
     if (this.formatHandlers.has(formatType)) {
@@ -353,11 +344,7 @@ class ToolboxUI {
       try {
         handler(this.currentSelection, formatType);
       } catch (error) {
-        console.error('❌ Erreur dans le handler de formatage:', error);
       }
-    } else {
-      console.log('🔨 Handler de formatage non trouvé pour:', formatType);
-      // TODO: Implémenter dans LIN-18
     }
   }
 
@@ -423,7 +410,6 @@ class ToolboxUI {
   destroy() {
     if (!this.toolboxElement) return;
 
-    console.log('🧹 Destruction de ToolboxUI');
 
     // Supprimer les événements
     document.removeEventListener('click', this.handleDocumentClick, true);

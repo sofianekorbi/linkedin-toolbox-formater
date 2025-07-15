@@ -90,11 +90,9 @@ class SelectionDetector {
    */
   init() {
     if (this.isInitialized) {
-      console.log('🔍 SelectionDetector déjà initialisé');
       return;
     }
 
-    console.log('🚀 Initialisation du SelectionDetector...');
     
     // Événements globaux
     document.addEventListener('selectionchange', this.handleSelectionChange, true);
@@ -105,7 +103,6 @@ class SelectionDetector {
     this.observeNewFields();
     
     this.isInitialized = true;
-    console.log('✅ SelectionDetector initialisé avec succès');
   }
 
   /**
@@ -158,7 +155,6 @@ class SelectionDetector {
     }
 
     field.setAttribute('data-ltf-monitored', 'true');
-    console.log('📝 Nouveau champ LinkedIn détecté:', this.getFieldInfo(field));
   }
 
   /**
@@ -353,12 +349,6 @@ class SelectionDetector {
     this.currentSelection = selectionData;
     this.currentField = selectionData.field;
 
-    console.log('✨ Nouvelle sélection détectée:', {
-      text: selectionData.text.substring(0, 50) + (selectionData.text.length > 50 ? '...' : ''),
-      length: selectionData.text.length,
-      fieldType: selectionData.fieldInfo.tagName,
-      placeholder: selectionData.fieldInfo.placeholder
-    });
 
     // Notifier les handlers
     this.notifySelectionHandlers('selection', selectionData);
@@ -369,7 +359,6 @@ class SelectionDetector {
    */
   clearSelection() {
     if (this.currentSelection) {
-      console.log('🗑️ Sélection effacée');
       
       // Notifier les handlers
       this.notifySelectionHandlers('deselection', {
@@ -403,7 +392,6 @@ class SelectionDetector {
       try {
         handler(type, data);
       } catch (error) {
-        console.error('❌ Erreur dans un handler de sélection:', error);
       }
     });
   }
@@ -441,7 +429,6 @@ class SelectionDetector {
     this.currentField = null;
     this.isInitialized = false;
 
-    console.log('🧹 SelectionDetector détruit');
   }
 }
 
@@ -527,7 +514,6 @@ class ToolboxUI {
    * Initialise la toolbox
    */
   init() {
-    console.log('🎨 Initialisation de ToolboxUI...');
     
     // Créer l'élément toolbox
     this.createToolboxElement();
@@ -536,7 +522,6 @@ class ToolboxUI {
     document.addEventListener('click', this.handleDocumentClick, true);
     document.addEventListener('keydown', this.handleKeyDown, true);
     
-    console.log('✅ ToolboxUI initialisé');
   }
 
   /**
@@ -667,10 +652,6 @@ class ToolboxUI {
     this.currentSelection = selectionData;
     this.isVisible = true;
 
-    console.log('🎨 Affichage de la toolbox pour:', {
-      text: selectionData.text.substring(0, 30) + '...',
-      field: selectionData.fieldInfo.tagName
-    });
 
     // Calculer la position
     const position = this.calculatePosition(selectionData);
@@ -748,7 +729,6 @@ class ToolboxUI {
     this.isVisible = false;
     this.isAnimating = true;
 
-    console.log('🎨 Masquage de la toolbox');
 
     // Animation fade-out
     this.toolboxElement.style.opacity = '0';
@@ -772,7 +752,6 @@ class ToolboxUI {
     const button = event.currentTarget;
     const formatType = button.getAttribute('data-format');
 
-    console.log('🎨 Clic sur bouton:', formatType);
 
     // Ajouter effet visuel de clic
     button.style.backgroundColor = '#e1e5e9';
@@ -793,7 +772,6 @@ class ToolboxUI {
   triggerFormatting(formatType) {
     if (!this.currentSelection) return;
 
-    console.log('🎨 Déclenchement formatage:', formatType);
 
     // Notifier les handlers enregistrés
     if (this.formatHandlers.has(formatType)) {
@@ -801,11 +779,7 @@ class ToolboxUI {
       try {
         handler(this.currentSelection, formatType);
       } catch (error) {
-        console.error('❌ Erreur dans le handler de formatage:', error);
       }
-    } else {
-      console.log('🔨 Handler de formatage non trouvé pour:', formatType);
-      // TODO: Implémenter dans LIN-18
     }
   }
 
@@ -871,7 +845,6 @@ class ToolboxUI {
   destroy() {
     if (!this.toolboxElement) return;
 
-    console.log('🧹 Destruction de ToolboxUI');
 
     // Supprimer les événements
     document.removeEventListener('click', this.handleDocumentClick, true);
@@ -936,10 +909,8 @@ function toBold(text) {
       result += boldChar || char; // Utiliser le caractère gras ou le caractère original
     }
 
-    console.log('✅ Texte formaté en gras:', { original: text, bold: result });
     return result;
   } catch (error) {
-    console.error('❌ Erreur lors du formatage en gras:', error);
     return text; // Fallback vers le texte original
   }
 }
@@ -982,10 +953,8 @@ function toItalic(text) {
       result += italicChar || char; // Utiliser le caractère italique ou le caractère original
     }
 
-    console.log('✅ Texte formaté en italique:', { original: text, italic: result });
     return result;
   } catch (error) {
-    console.error('❌ Erreur lors du formatage en italique:', error);
     return text; // Fallback vers le texte original
   }
 }
@@ -1040,14 +1009,8 @@ function toUnderline(text) {
       }
     }
 
-    console.log('✅ Texte formaté avec Mathematical Monospace + Underline:', { 
-      original: text, 
-      underlined: result,
-      method: 'monospace_with_combining_underline'
-    });
     return result;
   } catch (error) {
-    console.error('❌ Erreur lors du formatage souligné:', error);
     return text; // Fallback vers le texte original
   }
 }
@@ -1081,15 +1044,80 @@ function toStrikethrough(text) {
       }
     }
 
-    console.log('✅ Texte formaté avec strikethrough:', { 
-      original: text, 
-      strikethrough: result,
-      method: 'combining_strikethrough'
-    });
     return result;
   } catch (error) {
-    console.error('❌ Erreur lors du formatage barré:', error);
     return text; // Fallback vers le texte original
+  }
+}
+
+/**
+ * Convertit un texte formaté vers sa forme normale
+ * @param {string} text - Le texte formaté à normaliser
+ * @returns {string} - Le texte en forme normale
+ */
+function toNormal(text) {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  try {
+    let result = '';
+    
+    // Tables de reverse mapping pour chaque formatage
+    const reverseMapping = {
+      // Mathematical Bold → Normal
+      '𝐀': 'A', '𝐁': 'B', '𝐂': 'C', '𝐃': 'D', '𝐄': 'E', '𝐅': 'F', '𝐆': 'G', '𝐇': 'H',
+      '𝐈': 'I', '𝐉': 'J', '𝐊': 'K', '𝐋': 'L', '𝐌': 'M', '𝐍': 'N', '𝐎': 'O', '𝐏': 'P',
+      '𝐐': 'Q', '𝐑': 'R', '𝐒': 'S', '𝐓': 'T', '𝐔': 'U', '𝐕': 'V', '𝐖': 'W', '𝐗': 'X',
+      '𝐘': 'Y', '𝐙': 'Z',
+      '𝐚': 'a', '𝐛': 'b', '𝐜': 'c', '𝐝': 'd', '𝐞': 'e', '𝐟': 'f', '𝐠': 'g', '𝐡': 'h',
+      '𝐢': 'i', '𝐣': 'j', '𝐤': 'k', '𝐥': 'l', '𝐦': 'm', '𝐧': 'n', '𝐨': 'o', '𝐩': 'p',
+      '𝐪': 'q', '𝐫': 'r', '𝐬': 's', '𝐭': 't', '𝐮': 'u', '𝐯': 'v', '𝐰': 'w', '𝐱': 'x',
+      '𝐲': 'y', '𝐳': 'z',
+      '𝟎': '0', '𝟏': '1', '𝟐': '2', '𝟑': '3', '𝟒': '4', '𝟓': '5', '𝟔': '6', '𝟕': '7', '𝟖': '8', '𝟗': '9',
+      
+      // Mathematical Sans-Serif Italic → Normal
+      '𝘈': 'A', '𝘉': 'B', '𝘊': 'C', '𝘋': 'D', '𝘌': 'E', '𝘍': 'F', '𝘎': 'G', '𝘏': 'H',
+      '𝘐': 'I', '𝘑': 'J', '𝘒': 'K', '𝘓': 'L', '𝘔': 'M', '𝘕': 'N', '𝘖': 'O', '𝘗': 'P',
+      '𝘘': 'Q', '𝘙': 'R', '𝘚': 'S', '𝘛': 'T', '𝘜': 'U', '𝘝': 'V', '𝘞': 'W', '𝘟': 'X',
+      '𝘠': 'Y', '𝘡': 'Z',
+      '𝘢': 'a', '𝘣': 'b', '𝘤': 'c', '𝘥': 'd', '𝘦': 'e', '𝘧': 'f', '𝘨': 'g', '𝘩': 'h',
+      '𝘪': 'i', '𝘫': 'j', '𝘬': 'k', '𝘭': 'l', '𝘮': 'm', '𝘯': 'n', '𝘰': 'o', '𝘱': 'p',
+      '𝘲': 'q', '𝘳': 'r', '𝘴': 's', '𝘵': 't', '𝘶': 'u', '𝘷': 'v', '𝘸': 'w', '𝘹': 'x',
+      '𝘺': 'y', '𝘻': 'z',
+      
+      // Mathematical Monospace → Normal
+      '𝙰': 'A', '𝙱': 'B', '𝙲': 'C', '𝙳': 'D', '𝙴': 'E', '𝙵': 'F', '𝙶': 'G', '𝙷': 'H',
+      '𝙸': 'I', '𝙹': 'J', '𝙺': 'K', '𝙻': 'L', '𝙼': 'M', '𝙽': 'N', '𝙾': 'O', '𝙿': 'P',
+      '𝚀': 'Q', '𝚁': 'R', '𝚂': 'S', '𝚃': 'T', '𝚄': 'U', '𝚅': 'V', '𝚆': 'W', '𝚇': 'X',
+      '𝚈': 'Y', '𝚉': 'Z',
+      '𝚊': 'a', '𝚋': 'b', '𝚌': 'c', '𝚍': 'd', '𝚎': 'e', '𝚏': 'f', '𝚐': 'g', '𝚑': 'h',
+      '𝚒': 'i', '𝚓': 'j', '𝚔': 'k', '𝚕': 'l', '𝚖': 'm', '𝚗': 'n', '𝚘': 'o', '𝚙': 'p',
+      '𝚚': 'q', '𝚛': 'r', '𝚜': 's', '𝚝': 't', '𝚞': 'u', '𝚟': 'v', '𝚠': 'w', '𝚡': 'x',
+      '𝚢': 'y', '𝚣': 'z',
+      '𝟶': '0', '𝟷': '1', '𝟸': '2', '𝟹': '3', '𝟺': '4', '𝟻': '5', '𝟼': '6', '𝟽': '7', '𝟾': '8', '𝟿': '9'
+    };
+
+    // Combining characters à supprimer
+    const COMBINING_UNDERLINE = '\u0332';
+    const COMBINING_STRIKETHROUGH = '\u0336';
+
+    // Parcourir chaque caractère Unicode réel (pas code unit)
+    for (const char of text) {
+      // Ignorer les combining characters
+      if (char === COMBINING_UNDERLINE || char === COMBINING_STRIKETHROUGH) {
+        continue;
+      }
+      
+      // Convertir vers la forme normale si mapping existe
+      const normalChar = reverseMapping[char];
+      result += normalChar || char;
+    }
+
+    return result;
+
+  } catch (error) {
+    return text;
   }
 }
 
@@ -1132,8 +1160,9 @@ function detectFormatting(text) {
       detectedFormats.push('italic');
     }
 
-    // Détection du soulignement (combining underline)
-    if (text.includes(COMBINING_UNDERLINE)) {
+    // Détection du soulignement (monospace + combining underline)
+    // toUnderline() utilise monospace + combining underline, donc on détecte les deux
+    if (text.includes(COMBINING_UNDERLINE) || unicodeRanges.monospace.test(text)) {
       detectedFormats.push('underline');
     }
 
@@ -1142,577 +1171,227 @@ function detectFormatting(text) {
       detectedFormats.push('strikethrough');
     }
 
-    console.log('🔍 Formatages détectés:', { 
-      text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
-      detected: detectedFormats 
-    });
-
     return detectedFormats;
 
   } catch (error) {
-    console.error('❌ Erreur lors de la détection des formatages:', error);
     return [];
   }
 }
 
-// LinkedIn Field Analyzer - Outil de diagnostic pour LIN-19
-// Ce script aide à identifier et tester tous les champs LinkedIn
-
 /**
- * Analyseur de champs LinkedIn
- * Permet de diagnostiquer et tester la compatibilité des champs
+ * Applique un formatage simple avec toggle off et remplacement
+ * @param {string} text - Le texte à formater
+ * @param {Array<string>} existingFormats - Liste des formatages déjà appliqués
+ * @param {string} newFormat - Le nouveau formatage à appliquer
+ * @returns {string} - Le texte avec le nouveau formatage appliqué
  */
-class LinkedInFieldAnalyzer {
-  constructor() {
-    this.foundFields = [];
-    this.testedFields = [];
-    this.isAnalyzing = false;
+function applyIncrementalFormatting(text, existingFormats, newFormat) {
+  if (!text || typeof text !== 'string') {
+    return text;
   }
 
-  /**
-   * Lance l'analyse complète des champs sur la page actuelle
-   */
-  async analyzeCurrentPage() {
-    if (this.isAnalyzing) {
-      console.log('🔄 Analyse déjà en cours...');
-      return;
-    }
-
-    console.log('🔍 Début de l\'analyse des champs LinkedIn...');
-    this.isAnalyzing = true;
-    this.foundFields = [];
-
-    try {
-      // Analyser tous les sélecteurs connus
-      await this.scanKnownSelectors();
-      
-      // Rechercher de nouveaux champs potentiels
-      await this.discoverNewFields();
-      
-      // Générer le rapport
-      this.generateReport();
-      
-    } catch (error) {
-      console.error('❌ Erreur lors de l\'analyse:', error);
-    } finally {
-      this.isAnalyzing = false;
-    }
+  if (!existingFormats || !Array.isArray(existingFormats)) {
+    existingFormats = [];
   }
 
-  /**
-   * Scanne les sélecteurs déjà connus
-   */
-  async scanKnownSelectors() {
-    const knownSelectors = [
-      // Posts
-      { selector: '[data-placeholder*="partager"]', type: 'post', description: 'Post français' },
-      { selector: '[data-placeholder*="What\'s"]', type: 'post', description: 'Post anglais' },
-      { selector: '.ql-editor[contenteditable="true"]', type: 'post', description: 'Éditeur principal' },
-      { selector: '[role="textbox"]', type: 'post', description: 'Textbox ARIA' },
-      
-      // Commentaires
-      { selector: '[data-placeholder*="comment"]', type: 'comment', description: 'Commentaire général' },
-      { selector: '[data-placeholder*="Add a comment"]', type: 'comment', description: 'Commentaire anglais' },
-      { selector: '.comments-comment-box__form textarea', type: 'comment', description: 'Form commentaire' },
-      { selector: '.comments-comment-texteditor', type: 'comment', description: 'Éditeur commentaire' },
-      
-      // Messages
-      { selector: '[data-placeholder*="message"]', type: 'message', description: 'Message général' },
-      { selector: '[data-placeholder*="Write a message"]', type: 'message', description: 'Message anglais' },
-      { selector: '.msg-form__contenteditable', type: 'message', description: 'Form message' },
-      { selector: '.msg-form__compose', type: 'message', description: 'Compose message' },
-      
-      // Profil
-      { selector: '[data-placeholder*="headline"]', type: 'profile', description: 'Titre profil' },
-      { selector: '[data-placeholder*="summary"]', type: 'profile', description: 'Résumé profil' },
-      { selector: 'textarea[name*="summary"]', type: 'profile', description: 'Textarea résumé' },
-      { selector: 'textarea[name*="description"]', type: 'profile', description: 'Textarea description' }
-    ];
-
-    console.log('🔍 Scan des sélecteurs connus...');
-    
-    for (const config of knownSelectors) {
-      try {
-        const elements = document.querySelectorAll(config.selector);
-        if (elements.length > 0) {
-          elements.forEach((element, index) => {
-            this.foundFields.push({
-              ...config,
-              element: element,
-              index: index,
-              isVisible: this.isElementVisible(element),
-              boundingRect: element.getBoundingClientRect(),
-              computedStyle: window.getComputedStyle(element)
-            });
-          });
-          console.log(`✅ ${config.description}: ${elements.length} élément(s) trouvé(s)`);
-        }
-      } catch (error) {
-        console.warn(`⚠️ Erreur avec sélecteur ${config.selector}:`, error);
-      }
-    }
+  if (!newFormat || typeof newFormat !== 'string') {
+    return text;
   }
 
-  /**
-   * Découvre de nouveaux champs potentiels
-   */
-  async discoverNewFields() {
-    console.log('🔍 Recherche de nouveaux champs...');
-    
-    // Chercher tous les éléments contenteditable
-    const contentEditables = document.querySelectorAll('[contenteditable="true"]');
-    console.log(`📝 ${contentEditables.length} éléments contenteditable trouvés`);
-    
-    // Chercher toutes les textareas
-    const textareas = document.querySelectorAll('textarea');
-    console.log(`📝 ${textareas.length} textareas trouvées`);
-    
-    // Chercher tous les inputs text
-    const textInputs = document.querySelectorAll('input[type="text"]');
-    console.log(`📝 ${textInputs.length} inputs text trouvés`);
-    
-    // Chercher les éléments avec role="textbox"
-    const textboxes = document.querySelectorAll('[role="textbox"]');
-    console.log(`📝 ${textboxes.length} éléments textbox trouvés`);
-
-    // Analyser les nouveaux éléments
-    const allCandidates = [...contentEditables, ...textareas, ...textInputs, ...textboxes];
-    
-    for (const element of allCandidates) {
-      if (!this.isAlreadyKnown(element)) {
-        this.foundFields.push({
-          selector: this.generateSelector(element),
-          type: 'unknown',
-          description: 'Nouveau champ découvert',
-          element: element,
-          isVisible: this.isElementVisible(element),
-          boundingRect: element.getBoundingClientRect(),
-          placeholder: element.getAttribute('data-placeholder') || element.placeholder || '',
-          className: element.className,
-          id: element.id
-        });
-      }
+  try {
+    // 1. TOGGLE OFF: Si le formatage est déjà appliqué, revenir au texte normal
+    if (existingFormats.includes(newFormat)) {
+      return toNormal(text);
     }
-  }
 
-  /**
-   * Vérifie si un élément est déjà connu
-   */
-  isAlreadyKnown(element) {
-    return this.foundFields.some(field => field.element === element);
-  }
-
-  /**
-   * Génère un sélecteur CSS pour un élément
-   */
-  generateSelector(element) {
-    if (element.id) {
-      return `#${element.id}`;
+    // 2. REMPLACEMENT: Si un autre formatage existe, le remplacer (pas de combinaison)
+    if (existingFormats.length > 0) {
+      const normalizedText = toNormal(text);
+      return applySimpleFormatting(normalizedText, newFormat);
     }
-    
-    if (element.className) {
-      const classes = element.className.split(' ').filter(c => c.length > 0);
-      if (classes.length > 0) {
-        return `.${classes[0]}`;
-      }
-    }
-    
-    return element.tagName.toLowerCase();
-  }
 
-  /**
-   * Vérifie si un élément est visible
-   */
-  isElementVisible(element) {
-    const rect = element.getBoundingClientRect();
-    const style = window.getComputedStyle(element);
-    
-    return (
-      rect.width > 0 &&
-      rect.height > 0 &&
-      style.display !== 'none' &&
-      style.visibility !== 'hidden' &&
-      style.opacity !== '0'
-    );
-  }
+    // 3. FORMATAGE SIMPLE: Aucun formatage existant, appliquer le nouveau
+    return applySimpleFormatting(text, newFormat);
 
-  /**
-   * Teste la sélection sur un champ spécifique
-   */
-  async testFieldSelection(fieldData) {
-    console.log(`🧪 Test de sélection sur: ${fieldData.description}`);
-    
-    try {
-      const element = fieldData.element;
-      
-      // Focus sur l'élément
-      element.focus();
-      
-      // Insérer du texte de test
-      const testText = 'Test de sélection LinkedIn Formateur';
-      
-      if (element.contentEditable === 'true') {
-        element.textContent = testText;
-      } else if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
-        element.value = testText;
-      }
-      
-      // Sélectionner le texte
-      this.selectAllText(element);
-      
-      // Déclencher l'événement de sélection
-      const selectionEvent = new Event('selectionchange', { bubbles: true });
-      document.dispatchEvent(selectionEvent);
-      
-      // Attendre un peu pour voir si la toolbox apparaît
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Vérifier si la toolbox est apparue
-      const toolbox = document.querySelector('.linkedin-formatter-toolbox');
-      const hasToolbox = toolbox && toolbox.style.display !== 'none';
-      
-      const result = {
-        field: fieldData,
-        testText: testText,
-        hasToolbox: hasToolbox,
-        toolboxPosition: hasToolbox ? toolbox.getBoundingClientRect() : null,
-        timestamp: new Date().toISOString()
-      };
-      
-      this.testedFields.push(result);
-      
-      console.log(`${hasToolbox ? '✅' : '❌'} Test ${fieldData.description}: ${hasToolbox ? 'SUCCÈS' : 'ÉCHEC'}`);
-      
-      return result;
-      
-    } catch (error) {
-      console.error(`❌ Erreur lors du test de ${fieldData.description}:`, error);
-      return { field: fieldData, error: error.message };
-    }
-  }
-
-  /**
-   * Sélectionne tout le texte dans un élément
-   */
-  selectAllText(element) {
-    if (element.contentEditable === 'true') {
-      const range = document.createRange();
-      range.selectNodeContents(element);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-    } else {
-      element.select();
-    }
-  }
-
-  /**
-   * Génère un rapport d'analyse
-   */
-  generateReport() {
-    console.log('\n📊 ====== RAPPORT D\'ANALYSE LINKEDIN ======');
-    console.log(`🔍 Analyse effectuée le: ${new Date().toLocaleString()}`);
-    console.log(`📄 URL: ${window.location.href}`);
-    console.log(`📝 Champs trouvés: ${this.foundFields.length}`);
-    
-    // Grouper par type
-    const byType = {};
-    this.foundFields.forEach(field => {
-      if (!byType[field.type]) byType[field.type] = [];
-      byType[field.type].push(field);
-    });
-    
-    // Afficher par type
-    Object.keys(byType).forEach(type => {
-      console.log(`\n📋 === ${type.toUpperCase()} (${byType[type].length}) ===`);
-      byType[type].forEach(field => {
-        const visibility = field.isVisible ? '👁️' : '🙈';
-        console.log(`  ${visibility} ${field.description}`);
-        console.log(`     Sélecteur: ${field.selector}`);
-        if (field.placeholder) {
-          console.log(`     Placeholder: "${field.placeholder}"`);
-        }
-      });
-    });
-    
-    // Recommandations
-    console.log('\n💡 === RECOMMANDATIONS ===');
-    const visibleFields = this.foundFields.filter(f => f.isVisible);
-    const newFields = this.foundFields.filter(f => f.type === 'unknown' && f.isVisible);
-    
-    console.log(`✅ Champs visibles: ${visibleFields.length}/${this.foundFields.length}`);
-    console.log(`🆕 Nouveaux champs découverts: ${newFields.length}`);
-    
-    if (newFields.length > 0) {
-      console.log('\n🎯 Nouveaux sélecteurs à ajouter:');
-      newFields.forEach(field => {
-        console.log(`  - ${field.selector} // ${field.description}`);
-      });
-    }
-    
-    console.log('\n====== FIN DU RAPPORT ======\n');
-    
-    return {
-      total: this.foundFields.length,
-      visible: visibleFields.length,
-      newFields: newFields.length,
-      byType: byType
-    };
-  }
-
-  /**
-   * Lance des tests automatiques sur tous les champs visibles
-   */
-  async runAutomaticTests() {
-    console.log('🚀 Lancement des tests automatiques...');
-    
-    const visibleFields = this.foundFields.filter(f => f.isVisible);
-    
-    for (const field of visibleFields) {
-      await this.testFieldSelection(field);
-      // Pause entre les tests
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    
-    console.log(`✅ Tests terminés sur ${visibleFields.length} champs`);
-    return this.testedFields;
+  } catch (error) {
+    return text;
   }
 }
 
-// Export pour utilisation dans content.js
-window.LinkedInFieldAnalyzer = LinkedInFieldAnalyzer;
+/**
+ * Applique un formatage simple à un texte normal
+ * @param {string} text - Le texte à formater
+ * @param {string} formatType - Le type de formatage ('bold', 'italic', 'underline', 'strikethrough')
+ * @returns {string} - Le texte formaté
+ */
+function applySimpleFormatting(text, formatType) {
+  switch (formatType) {
+    case 'bold':
+      return toBold(text);
+    case 'italic':
+      return toItalic(text);
+    case 'underline':
+      return toUnderline(text);
+    case 'strikethrough':
+      return toStrikethrough(text);
+    default:
+      return text;
+  }
+}
 
-// Fonction globale pour lancer l'analyse facilement
-window.analyzeLinkedInFields = async function() {
-  const analyzer = new LinkedInFieldAnalyzer();
-  await analyzer.analyzeCurrentPage();
-  return analyzer;
-};
+// LinkedIn Formateur Toolbox - Content Script
+// Ce script sera injecté sur toutes les pages LinkedIn
 
-// Fonction globale pour tester tous les champs
-window.testAllLinkedInFields = async function() {
-  const analyzer = new LinkedInFieldAnalyzer();
-  await analyzer.analyzeCurrentPage();
-  const results = await analyzer.runAutomaticTests();
-  return results;
-};
 
-console.log('🔧 LinkedIn Field Analyzer chargé. Utilisez:');
-console.log('   - analyzeLinkedInFields() pour analyser');
-console.log('   - testAllLinkedInFields() pour tester');
 
-console.log("🚀 LinkedIn Formateur Toolbox - Content Script chargé");
+/**
+ * Classe principale de l'extension
+ */
 class LinkedInFormatterToolbox {
   constructor() {
     this.isInitialized = false;
     this.currentSelection = null;
+    
+    // Bind methods
     this.handleSelectionEvent = this.handleSelectionEvent.bind(this);
   }
+
   /**
    * Initialise l'extension
    */
   async init() {
     if (this.isInitialized) {
-      console.log("🔄 Extension déjà initialisée");
       return;
     }
-    console.log("🚀 Initialisation de LinkedIn Formateur Toolbox...");
+
     try {
+      // Vérifier qu'on est bien sur LinkedIn
       if (!this.isLinkedInPage()) {
-        console.log("⚠️ Pas sur LinkedIn, extension non activée");
         return;
       }
+
+      // Initialiser le détecteur de sélection
       selectionDetector.init();
+      
+      // Ajouter notre handler pour les événements de sélection
       selectionDetector.addSelectionHandler(this.handleSelectionEvent);
+
+      // Enregistrer les handlers de formatage
       this.registerFormatHandlers();
+
       this.isInitialized = true;
-      console.log("✅ LinkedIn Formateur Toolbox initialisé avec succès");
-      if (false) ;
+
     } catch (error) {
-      console.error("❌ Erreur lors de l'initialisation:", error);
+      // Silently fail in production
     }
   }
+
   /**
    * Vérifie si on est sur une page LinkedIn
    */
   isLinkedInPage() {
-    return window.location.hostname.includes("linkedin.com");
+    return window.location.hostname.includes('linkedin.com');
   }
+
   /**
    * Gère les événements de sélection/désélection
    */
   handleSelectionEvent(type, data) {
-    if (type === "selection") {
+    if (type === 'selection') {
       this.onTextSelected(data);
-    } else if (type === "deselection") {
+    } else if (type === 'deselection') {
       this.onTextDeselected(data);
     }
   }
+
   /**
    * Appelé quand du texte est sélectionné
    */
   onTextSelected(selectionData) {
     this.currentSelection = selectionData;
-    console.log("✨ Texte sélectionné:", {
-      text: selectionData.text.substring(0, 100) + (selectionData.text.length > 100 ? "..." : ""),
-      length: selectionData.text.length,
-      fieldType: selectionData.fieldInfo.tagName,
-      placeholder: selectionData.fieldInfo.placeholder.substring(0, 50)
-    });
+    
+    // LIN-33: Détecter les formatages existants
     const existingFormats = detectFormatting(selectionData.text);
-    console.log("🔍 Formatages existants détectés:", existingFormats);
+
+    // Enrichir les données de sélection avec les formatages détectés
     selectionData.existingFormats = existingFormats;
+
+    // Afficher la toolbox
     this.showToolbox(selectionData);
   }
+
   /**
    * Appelé quand la sélection est effacée
    */
   onTextDeselected(data) {
-    console.log("🗑️ Sélection effacée");
     this.currentSelection = null;
+
+    // Masquer la toolbox
     this.hideToolbox();
   }
+
   /**
    * Affiche la toolbox de formatage
    */
   showToolbox(selectionData) {
-    console.log("🎨 Affichage de la toolbox pour la sélection");
     toolboxUI.show(selectionData);
   }
+
   /**
    * Masque la toolbox de formatage
    */
   hideToolbox() {
-    console.log("🎨 Masquage de la toolbox");
     toolboxUI.hide();
   }
-  /**
-   * Affiche des informations de debug sur la sélection (mode dev uniquement)
-   */
-  showSelectionDebugInfo(selectionData) {
-    let debugElement = document.getElementById("ltf-debug-selection");
-    if (!debugElement) {
-      debugElement = document.createElement("div");
-      debugElement.id = "ltf-debug-selection";
-      debugElement.style.cssText = `
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 10000;
-        background: #0a66c2;
-        color: white;
-        padding: 10px;
-        border-radius: 8px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-size: 12px;
-        max-width: 300px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      `;
-      document.body.appendChild(debugElement);
-    }
-    debugElement.innerHTML = `
-      <strong>🎯 LTF Debug - Sélection détectée</strong><br>
-      <strong>Texte:</strong> "${selectionData.text.substring(0, 50)}${selectionData.text.length > 50 ? "..." : ""}"<br>
-      <strong>Longueur:</strong> ${selectionData.text.length} caractères<br>
-      <strong>Champ:</strong> ${selectionData.fieldInfo.tagName}<br>
-      <strong>Placeholder:</strong> ${selectionData.fieldInfo.placeholder.substring(0, 30)}<br>
-      <strong>Classes:</strong> ${selectionData.fieldInfo.classes.slice(0, 2).join(", ")}
-    `;
-    setTimeout(() => {
-      if (debugElement && debugElement.parentNode) {
-        debugElement.remove();
-      }
-    }, 5e3);
-  }
-  /**
-   * Nettoie les informations de debug
-   */
-  clearDebugInfo() {
-    const debugElement = document.getElementById("ltf-debug-selection");
-    if (debugElement) {
-      debugElement.remove();
-    }
-  }
-  /**
-   * Affiche une notification de test en mode développement
-   */
-  showDevNotification() {
-    const notification = document.createElement("div");
-    notification.style.cssText = `
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 10000;
-      background: #28a745;
-      color: white;
-      padding: 10px;
-      border-radius: 8px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-    notification.innerHTML = `
-      <strong>🚀 LinkedIn Formateur Toolbox</strong><br>
-      Extension chargée en mode développement<br>
-      <small>Sélectionnez du texte pour tester la détection</small>
-    `;
-    document.body.appendChild(notification);
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.remove();
-      }
-    }, 3e3);
-  }
+
+
   /**
    * Enregistre les handlers de formatage
    */
   registerFormatHandlers() {
-    toolboxUI.addFormatHandler("bold", (selectionData, formatType) => {
-      console.log("🎨 Formatage gras demandé pour:", selectionData.text);
+    // Handler pour le formatage gras
+    toolboxUI.addFormatHandler('bold', (selectionData, formatType) => {
       this.applyFormatting(selectionData, formatType);
     });
-    toolboxUI.addFormatHandler("italic", (selectionData, formatType) => {
-      console.log("🎨 Formatage italique demandé pour:", selectionData.text);
+
+    // Handler pour le formatage italique
+    toolboxUI.addFormatHandler('italic', (selectionData, formatType) => {
       this.applyFormatting(selectionData, formatType);
     });
-    toolboxUI.addFormatHandler("underline", (selectionData, formatType) => {
-      console.log("🎨 Formatage souligné demandé pour:", selectionData.text);
+
+    // Handler pour le formatage souligné
+    toolboxUI.addFormatHandler('underline', (selectionData, formatType) => {
       this.applyFormatting(selectionData, formatType);
     });
-    toolboxUI.addFormatHandler("strikethrough", (selectionData, formatType) => {
-      console.log("🎨 Formatage barré demandé pour:", selectionData.text);
+
+    // Handler pour le formatage barré
+    toolboxUI.addFormatHandler('strikethrough', (selectionData, formatType) => {
       this.applyFormatting(selectionData, formatType);
     });
-    console.log("✅ Handlers de formatage enregistrés");
   }
+
   /**
-   * Applique le formatage au texte sélectionné
+   * Applique le formatage au texte sélectionné avec comportement simplifié
    */
   applyFormatting(selectionData, formatType) {
     try {
-      let formattedText;
-      switch (formatType) {
-        case "bold":
-          formattedText = toBold(selectionData.text);
-          break;
-        case "italic":
-          formattedText = toItalic(selectionData.text);
-          break;
-        case "underline":
-          formattedText = toUnderline(selectionData.text);
-          break;
-        case "strikethrough":
-          formattedText = toStrikethrough(selectionData.text);
-          break;
-        default:
-          console.warn("⚠️ Type de formatage non supporté:", formatType);
-          formattedText = selectionData.text;
-      }
+      const existingFormats = selectionData.existingFormats || [];
+      
+      // Utiliser la logique simplifiée pour tous les cas
+      const formattedText = applyIncrementalFormatting(
+        selectionData.text, 
+        existingFormats, 
+        formatType
+      );
+
+      // Remplacer le texte sélectionné
       this.replaceSelectedText(selectionData, formattedText);
+
     } catch (error) {
-      console.error("❌ Erreur lors du formatage:", error);
+      // Silently fail in production
     }
   }
+
   /**
    * Remplace le texte sélectionné dans le champ LinkedIn
    */
@@ -1720,111 +1399,121 @@ class LinkedInFormatterToolbox {
     try {
       const field = selectionData.field;
       const range = selectionData.range;
-      console.log("🔄 Remplacement du texte:", {
-        original: selectionData.text,
-        formatted: newText,
-        fieldType: field.tagName
-      });
-      if (field.contentEditable === "true") {
+
+      // Méthode 1: Pour les éléments contenteditable (posts, commentaires)
+      if (field.contentEditable === 'true') {
+        // Supprimer le contenu sélectionné et insérer le nouveau texte
         range.deleteContents();
         const textNode = document.createTextNode(newText);
         range.insertNode(textNode);
+        
+        // Repositionner le curseur après le texte inséré
         range.setStartAfter(textNode);
         range.setEndAfter(textNode);
+        
+        // Effacer la sélection
         window.getSelection().removeAllRanges();
         window.getSelection().addRange(range);
         window.getSelection().collapseToEnd();
+
+        // Déclencher les événements pour notifier LinkedIn
         this.triggerLinkedInEvents(field);
-      } else if (field.tagName === "TEXTAREA" || field.tagName === "INPUT") {
+
+      // Méthode 2: Pour les textarea et input
+      } else if (field.tagName === 'TEXTAREA' || field.tagName === 'INPUT') {
         const start = field.selectionStart;
         const end = field.selectionEnd;
         const value = field.value;
+        
+        // Remplacer le texte sélectionné
         field.value = value.substring(0, start) + newText + value.substring(end);
+        
+        // Repositionner le curseur
         const newCursorPos = start + newText.length;
         field.setSelectionRange(newCursorPos, newCursorPos);
+        
+        // Déclencher les événements
         this.triggerLinkedInEvents(field);
-      } else {
-        console.warn("⚠️ Type de champ non supporté pour le remplacement:", field.tagName);
+
       }
-      console.log("✅ Texte remplacé avec succès");
+
     } catch (error) {
-      console.error("❌ Erreur lors du remplacement du texte:", error);
+      // Silently fail in production
     }
   }
+
   /**
    * Déclenche les événements nécessaires pour notifier LinkedIn des changements
    */
   triggerLinkedInEvents(field) {
-    const events = ["input", "change", "keyup"];
-    events.forEach((eventType) => {
+    // Événements de base pour notifier les changements
+    const events = ['input', 'change', 'keyup'];
+    
+    events.forEach(eventType => {
       const event = new Event(eventType, {
         bubbles: true,
         cancelable: true
       });
       field.dispatchEvent(event);
     });
+
+    // Focus sur le champ pour maintenir l'état actif
     field.focus();
   }
+
   /**
    * Obtient la sélection actuelle
    */
   getCurrentSelection() {
     return this.currentSelection;
   }
+
   /**
    * Nettoie l'extension
    */
   destroy() {
     if (!this.isInitialized) return;
+
+    // Nettoyer le détecteur de sélection
     selectionDetector.removeSelectionHandler(this.handleSelectionEvent);
     selectionDetector.destroy();
+
+    // Nettoyer la toolbox
     toolboxUI.destroy();
-    this.clearDebugInfo();
+
     this.currentSelection = null;
     this.isInitialized = false;
-    console.log("🧹 LinkedIn Formateur Toolbox nettoyé");
-  }
-  /**
-   * Lance l'analyse des champs LinkedIn (LIN-19)
-   */
-  async analyzeLinkedInFields() {
-    console.log("🔍 Lancement de l'analyse des champs LinkedIn (LIN-19)...");
-    const analyzer = new LinkedInFieldAnalyzer();
-    await analyzer.analyzeCurrentPage();
-    window.linkedInAnalyzer = analyzer;
-    console.log("✅ Analyse terminée. Utilisez window.linkedInAnalyzer pour plus de détails");
-    return analyzer;
-  }
-  /**
-   * Lance des tests automatiques sur tous les champs (LIN-19)
-   */
-  async testAllFields() {
-    console.log("🧪 Lancement des tests automatiques sur tous les champs...");
-    const analyzer = new LinkedInFieldAnalyzer();
-    await analyzer.analyzeCurrentPage();
-    const results = await analyzer.runAutomaticTests();
-    console.log("✅ Tests automatiques terminés");
-    return results;
   }
 }
+
+// Initialisation automatique
 const toolbox = new LinkedInFormatterToolbox();
+
+// Exposer globalement pour l'extension
 window.linkedInFormatterToolbox = toolbox;
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => toolbox.init());
+
+// Initialiser quand le DOM est prêt
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => toolbox.init());
 } else {
+  // DOM déjà prêt
   toolbox.init();
 }
+
+// Pour LinkedIn SPA, réinitialiser lors des changements de page
 let currentUrl = window.location.href;
 const observer = new MutationObserver(() => {
   if (window.location.href !== currentUrl) {
     currentUrl = window.location.href;
-    console.log("🔄 Navigation LinkedIn détectée, réinitialisation...");
+    
+    // Délai pour laisser LinkedIn finir de charger
     setTimeout(() => {
       toolbox.destroy();
       toolbox.init();
-    }, 1e3);
+    }, 1000);
   }
 });
+
 observer.observe(document.body, {
   childList: true,
   subtree: true

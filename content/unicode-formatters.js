@@ -40,10 +40,8 @@ export function toBold(text) {
       result += boldChar || char; // Utiliser le caractère gras ou le caractère original
     }
 
-    console.log('✅ Texte formaté en gras:', { original: text, bold: result });
     return result;
   } catch (error) {
-    console.error('❌ Erreur lors du formatage en gras:', error);
     return text; // Fallback vers le texte original
   }
 }
@@ -86,10 +84,8 @@ export function toItalic(text) {
       result += italicChar || char; // Utiliser le caractère italique ou le caractère original
     }
 
-    console.log('✅ Texte formaté en italique:', { original: text, italic: result });
     return result;
   } catch (error) {
-    console.error('❌ Erreur lors du formatage en italique:', error);
     return text; // Fallback vers le texte original
   }
 }
@@ -144,14 +140,8 @@ export function toUnderline(text) {
       }
     }
 
-    console.log('✅ Texte formaté avec Mathematical Monospace + Underline:', { 
-      original: text, 
-      underlined: result,
-      method: 'monospace_with_combining_underline'
-    });
     return result;
   } catch (error) {
-    console.error('❌ Erreur lors du formatage souligné:', error);
     return text; // Fallback vers le texte original
   }
 }
@@ -185,14 +175,8 @@ export function toStrikethrough(text) {
       }
     }
 
-    console.log('✅ Texte formaté avec strikethrough:', { 
-      original: text, 
-      strikethrough: result,
-      method: 'combining_strikethrough'
-    });
     return result;
   } catch (error) {
-    console.error('❌ Erreur lors du formatage barré:', error);
     return text; // Fallback vers le texte original
   }
 }
@@ -251,38 +235,19 @@ export function toNormal(text) {
 
     // Parcourir chaque caractère Unicode réel (pas code unit)
     for (const char of text) {
-      // Debug: afficher chaque caractère
-      console.log(`🔍 Caractère: '${char}' (U+${char.codePointAt(0).toString(16).toUpperCase()})`);
-      
       // Ignorer les combining characters
       if (char === COMBINING_UNDERLINE || char === COMBINING_STRIKETHROUGH) {
-        console.log(`  ↪ Combining character ignoré`);
         continue;
       }
       
       // Convertir vers la forme normale si mapping existe
       const normalChar = reverseMapping[char];
-      if (normalChar) {
-        console.log(`  ↪ Conversion: '${char}' → '${normalChar}'`);
-        result += normalChar;
-      } else {
-        console.log(`  ↪ Pas de mapping, caractère conservé: '${char}'`);
-        result += char;
-      }
+      result += normalChar || char;
     }
 
-    console.log('✅ Texte normalisé:', { 
-      original: text.substring(0, 20) + '...', 
-      normalized: result.substring(0, 20) + '...',
-      originalLength: text.length,
-      normalizedLength: result.length,
-      changed: text !== result
-    });
-    
     return result;
 
   } catch (error) {
-    console.error('❌ Erreur lors de la normalisation:', error);
     return text;
   }
 }
@@ -337,22 +302,9 @@ export function detectFormatting(text) {
       detectedFormats.push('strikethrough');
     }
 
-    console.log('🔍 Formatages détectés:', { 
-      text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
-      detected: detectedFormats,
-      debug: {
-        boldMatch: unicodeRanges.bold.test(text),
-        italicMatch: unicodeRanges.italic.test(text),
-        monospaceMatch: unicodeRanges.monospace.test(text),
-        combiningUnderline: text.includes(COMBINING_UNDERLINE),
-        combiningStrikethrough: text.includes(COMBINING_STRIKETHROUGH)
-      }
-    });
-
     return detectedFormats;
 
   } catch (error) {
-    console.error('❌ Erreur lors de la détection des formatages:', error);
     return [];
   }
 }
@@ -378,40 +330,21 @@ export function applyIncrementalFormatting(text, existingFormats, newFormat) {
   }
 
   try {
-    console.log('🔄 applyIncrementalFormatting() appelée:', {
-      text: text.substring(0, 20) + '...',
-      existingFormats: existingFormats,
-      newFormat: newFormat
-    });
-
     // 1. TOGGLE OFF: Si le formatage est déjà appliqué, revenir au texte normal
     if (existingFormats.includes(newFormat)) {
-      console.log(`🔄 Toggle OFF: Formatage '${newFormat}' déjà appliqué, conversion vers texte normal`);
-      const normalizedText = toNormal(text);
-      console.log('🔄 Toggle OFF result:', { original: text.substring(0, 20) + '...', normalized: normalizedText.substring(0, 20) + '...' });
-      return normalizedText;
+      return toNormal(text);
     }
 
     // 2. REMPLACEMENT: Si un autre formatage existe, le remplacer (pas de combinaison)
     if (existingFormats.length > 0) {
-      console.log(`🔄 Remplacement: ${existingFormats.join(',')} → ${newFormat}`);
-      
-      // Normaliser d'abord le texte, puis appliquer le nouveau formatage
       const normalizedText = toNormal(text);
-      console.log('🔄 Remplacement - après normalisation:', { original: text.substring(0, 20) + '...', normalized: normalizedText.substring(0, 20) + '...' });
-      const formattedText = applySimpleFormatting(normalizedText, newFormat);
-      console.log('🔄 Remplacement - après formatage:', { normalized: normalizedText.substring(0, 20) + '...', formatted: formattedText.substring(0, 20) + '...' });
-      return formattedText;
+      return applySimpleFormatting(normalizedText, newFormat);
     }
 
     // 3. FORMATAGE SIMPLE: Aucun formatage existant, appliquer le nouveau
-    console.log(`🆕 Formatage simple: ${newFormat}`);
-    const formattedText = applySimpleFormatting(text, newFormat);
-    console.log('🆕 Formatage simple result:', { original: text.substring(0, 20) + '...', formatted: formattedText.substring(0, 20) + '...' });
-    return formattedText;
+    return applySimpleFormatting(text, newFormat);
 
   } catch (error) {
-    console.error('❌ Erreur lors de l\'application incrémentale:', error);
     return text;
   }
 }
@@ -433,7 +366,6 @@ function applySimpleFormatting(text, formatType) {
     case 'strikethrough':
       return toStrikethrough(text);
     default:
-      console.warn('⚠️ Type de formatage non supporté:', formatType);
       return text;
   }
 }

@@ -4,9 +4,7 @@
 import { selectionDetector } from './selection-detector.js';
 import { toolboxUI } from './toolbox.js';
 import { toBold, toItalic, toUnderline, toStrikethrough, toNormal, detectFormatting, applyIncrementalFormatting } from './unicode-formatters.js';
-import { LinkedInFieldAnalyzer } from './field-analyzer.js';
 
-console.log('🚀 LinkedIn Formateur Toolbox - Content Script chargé');
 
 /**
  * Classe principale de l'extension
@@ -25,16 +23,12 @@ class LinkedInFormatterToolbox {
    */
   async init() {
     if (this.isInitialized) {
-      console.log('🔄 Extension déjà initialisée');
       return;
     }
-
-    console.log('🚀 Initialisation de LinkedIn Formateur Toolbox...');
 
     try {
       // Vérifier qu'on est bien sur LinkedIn
       if (!this.isLinkedInPage()) {
-        console.log('⚠️ Pas sur LinkedIn, extension non activée');
         return;
       }
 
@@ -48,17 +42,9 @@ class LinkedInFormatterToolbox {
       this.registerFormatHandlers();
 
       this.isInitialized = true;
-      console.log('✅ LinkedIn Formateur Toolbox initialisé avec succès');
-
-      // Notification de test en mode développement
-      if (__DEV__) {
-        console.log('🔧 Mode développement activé');
-        console.log('📦 Version:', __VERSION__);
-        this.showDevNotification();
-      }
 
     } catch (error) {
-      console.error('❌ Erreur lors de l\'initialisation:', error);
+      // Silently fail in production
     }
   }
 
@@ -86,50 +72,30 @@ class LinkedInFormatterToolbox {
   onTextSelected(selectionData) {
     this.currentSelection = selectionData;
     
-    console.log('✨ Texte sélectionné:', {
-      text: selectionData.text.substring(0, 100) + (selectionData.text.length > 100 ? '...' : ''),
-      length: selectionData.text.length,
-      fieldType: selectionData.fieldInfo.tagName,
-      placeholder: selectionData.fieldInfo.placeholder.substring(0, 50)
-    });
-
     // LIN-33: Détecter les formatages existants
     const existingFormats = detectFormatting(selectionData.text);
-    console.log('🔍 Formatages existants détectés:', existingFormats);
 
     // Enrichir les données de sélection avec les formatages détectés
     selectionData.existingFormats = existingFormats;
 
     // Afficher la toolbox
     this.showToolbox(selectionData);
-    
-    // Pour le développement, afficher une notification visuelle
-    if (__DEV__) {
-      this.showSelectionDebugInfo(selectionData);
-    }
   }
 
   /**
    * Appelé quand la sélection est effacée
    */
   onTextDeselected(data) {
-    console.log('🗑️ Sélection effacée');
     this.currentSelection = null;
 
     // Masquer la toolbox
     this.hideToolbox();
-
-    // Nettoyer les éléments de debug en mode développement
-    if (__DEV__) {
-      this.clearDebugInfo();
-    }
   }
 
   /**
    * Affiche la toolbox de formatage
    */
   showToolbox(selectionData) {
-    console.log('🎨 Affichage de la toolbox pour la sélection');
     toolboxUI.show(selectionData);
   }
 
@@ -137,97 +103,9 @@ class LinkedInFormatterToolbox {
    * Masque la toolbox de formatage
    */
   hideToolbox() {
-    console.log('🎨 Masquage de la toolbox');
     toolboxUI.hide();
   }
 
-  /**
-   * Affiche des informations de debug sur la sélection (mode dev uniquement)
-   */
-  showSelectionDebugInfo(selectionData) {
-    // Créer ou mettre à jour l'élément de debug
-    let debugElement = document.getElementById('ltf-debug-selection');
-    
-    if (!debugElement) {
-      debugElement = document.createElement('div');
-      debugElement.id = 'ltf-debug-selection';
-      debugElement.style.cssText = `
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 10000;
-        background: #0a66c2;
-        color: white;
-        padding: 10px;
-        border-radius: 8px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-size: 12px;
-        max-width: 300px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      `;
-      document.body.appendChild(debugElement);
-    }
-
-    debugElement.innerHTML = `
-      <strong>🎯 LTF Debug - Sélection détectée</strong><br>
-      <strong>Texte:</strong> "${selectionData.text.substring(0, 50)}${selectionData.text.length > 50 ? '...' : ''}"<br>
-      <strong>Longueur:</strong> ${selectionData.text.length} caractères<br>
-      <strong>Champ:</strong> ${selectionData.fieldInfo.tagName}<br>
-      <strong>Placeholder:</strong> ${selectionData.fieldInfo.placeholder.substring(0, 30)}<br>
-      <strong>Classes:</strong> ${selectionData.fieldInfo.classes.slice(0, 2).join(', ')}
-    `;
-
-    // Auto-suppression après 5 secondes
-    setTimeout(() => {
-      if (debugElement && debugElement.parentNode) {
-        debugElement.remove();
-      }
-    }, 5000);
-  }
-
-  /**
-   * Nettoie les informations de debug
-   */
-  clearDebugInfo() {
-    const debugElement = document.getElementById('ltf-debug-selection');
-    if (debugElement) {
-      debugElement.remove();
-    }
-  }
-
-  /**
-   * Affiche une notification de test en mode développement
-   */
-  showDevNotification() {
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 10000;
-      background: #28a745;
-      color: white;
-      padding: 10px;
-      border-radius: 8px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-    notification.innerHTML = `
-      <strong>🚀 LinkedIn Formateur Toolbox</strong><br>
-      Extension chargée en mode développement<br>
-      <small>Sélectionnez du texte pour tester la détection</small>
-    `;
-
-    document.body.appendChild(notification);
-
-    // Auto-suppression après 3 secondes
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.remove();
-      }
-    }, 3000);
-  }
 
   /**
    * Enregistre les handlers de formatage
@@ -235,29 +113,23 @@ class LinkedInFormatterToolbox {
   registerFormatHandlers() {
     // Handler pour le formatage gras
     toolboxUI.addFormatHandler('bold', (selectionData, formatType) => {
-      console.log('🎨 Formatage gras demandé pour:', selectionData.text);
       this.applyFormatting(selectionData, formatType);
     });
 
     // Handler pour le formatage italique
     toolboxUI.addFormatHandler('italic', (selectionData, formatType) => {
-      console.log('🎨 Formatage italique demandé pour:', selectionData.text);
       this.applyFormatting(selectionData, formatType);
     });
 
     // Handler pour le formatage souligné
     toolboxUI.addFormatHandler('underline', (selectionData, formatType) => {
-      console.log('🎨 Formatage souligné demandé pour:', selectionData.text);
       this.applyFormatting(selectionData, formatType);
     });
 
     // Handler pour le formatage barré
     toolboxUI.addFormatHandler('strikethrough', (selectionData, formatType) => {
-      console.log('🎨 Formatage barré demandé pour:', selectionData.text);
       this.applyFormatting(selectionData, formatType);
     });
-
-    console.log('✅ Handlers de formatage enregistrés');
   }
 
   /**
@@ -278,7 +150,7 @@ class LinkedInFormatterToolbox {
       this.replaceSelectedText(selectionData, formattedText);
 
     } catch (error) {
-      console.error('❌ Erreur lors du formatage:', error);
+      // Silently fail in production
     }
   }
 
@@ -289,12 +161,6 @@ class LinkedInFormatterToolbox {
     try {
       const field = selectionData.field;
       const range = selectionData.range;
-
-      console.log('🔄 Remplacement du texte:', {
-        original: selectionData.text,
-        formatted: newText,
-        fieldType: field.tagName
-      });
 
       // Méthode 1: Pour les éléments contenteditable (posts, commentaires)
       if (field.contentEditable === 'true') {
@@ -331,14 +197,10 @@ class LinkedInFormatterToolbox {
         // Déclencher les événements
         this.triggerLinkedInEvents(field);
 
-      } else {
-        console.warn('⚠️ Type de champ non supporté pour le remplacement:', field.tagName);
       }
 
-      console.log('✅ Texte remplacé avec succès');
-
     } catch (error) {
-      console.error('❌ Erreur lors du remplacement du texte:', error);
+      // Silently fail in production
     }
   }
 
@@ -381,50 +243,15 @@ class LinkedInFormatterToolbox {
     // Nettoyer la toolbox
     toolboxUI.destroy();
 
-    // Nettoyer les éléments de debug
-    this.clearDebugInfo();
-
     this.currentSelection = null;
     this.isInitialized = false;
-
-    console.log('🧹 LinkedIn Formateur Toolbox nettoyé');
-  }
-
-  /**
-   * Lance l'analyse des champs LinkedIn (LIN-19)
-   */
-  async analyzeLinkedInFields() {
-    console.log('🔍 Lancement de l\'analyse des champs LinkedIn (LIN-19)...');
-    
-    const analyzer = new LinkedInFieldAnalyzer();
-    await analyzer.analyzeCurrentPage();
-    
-    // Exposer l'analyseur globalement pour les tests manuels
-    window.linkedInAnalyzer = analyzer;
-    
-    console.log('✅ Analyse terminée. Utilisez window.linkedInAnalyzer pour plus de détails');
-    return analyzer;
-  }
-
-  /**
-   * Lance des tests automatiques sur tous les champs (LIN-19)
-   */
-  async testAllFields() {
-    console.log('🧪 Lancement des tests automatiques sur tous les champs...');
-    
-    const analyzer = new LinkedInFieldAnalyzer();
-    await analyzer.analyzeCurrentPage();
-    const results = await analyzer.runAutomaticTests();
-    
-    console.log('✅ Tests automatiques terminés');
-    return results;
   }
 }
 
 // Initialisation automatique
 const toolbox = new LinkedInFormatterToolbox();
 
-// Exposer globalement pour les tests et debugging (LIN-19)
+// Exposer globalement pour l'extension
 window.linkedInFormatterToolbox = toolbox;
 
 // Initialiser quand le DOM est prêt
@@ -440,7 +267,6 @@ let currentUrl = window.location.href;
 const observer = new MutationObserver(() => {
   if (window.location.href !== currentUrl) {
     currentUrl = window.location.href;
-    console.log('🔄 Navigation LinkedIn détectée, réinitialisation...');
     
     // Délai pour laisser LinkedIn finir de charger
     setTimeout(() => {

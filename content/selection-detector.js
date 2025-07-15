@@ -90,11 +90,9 @@ class SelectionDetector {
    */
   init() {
     if (this.isInitialized) {
-      console.log('🔍 SelectionDetector déjà initialisé');
       return;
     }
 
-    console.log('🚀 Initialisation du SelectionDetector...');
     
     // Événements globaux
     document.addEventListener('selectionchange', this.handleSelectionChange, true);
@@ -105,7 +103,6 @@ class SelectionDetector {
     this.observeNewFields();
     
     this.isInitialized = true;
-    console.log('✅ SelectionDetector initialisé avec succès');
   }
 
   /**
@@ -158,7 +155,6 @@ class SelectionDetector {
     }
 
     field.setAttribute('data-ltf-monitored', 'true');
-    console.log('📝 Nouveau champ LinkedIn détecté:', this.getFieldInfo(field));
   }
 
   /**
@@ -353,12 +349,6 @@ class SelectionDetector {
     this.currentSelection = selectionData;
     this.currentField = selectionData.field;
 
-    console.log('✨ Nouvelle sélection détectée:', {
-      text: selectionData.text.substring(0, 50) + (selectionData.text.length > 50 ? '...' : ''),
-      length: selectionData.text.length,
-      fieldType: selectionData.fieldInfo.tagName,
-      placeholder: selectionData.fieldInfo.placeholder
-    });
 
     // Notifier les handlers
     this.notifySelectionHandlers('selection', selectionData);
@@ -369,7 +359,6 @@ class SelectionDetector {
    */
   clearSelection() {
     if (this.currentSelection) {
-      console.log('🗑️ Sélection effacée');
       
       // Notifier les handlers
       this.notifySelectionHandlers('deselection', {
@@ -403,7 +392,6 @@ class SelectionDetector {
       try {
         handler(type, data);
       } catch (error) {
-        console.error('❌ Erreur dans un handler de sélection:', error);
       }
     });
   }
@@ -441,7 +429,6 @@ class SelectionDetector {
     this.currentField = null;
     this.isInitialized = false;
 
-    console.log('🧹 SelectionDetector détruit');
   }
 }
 
