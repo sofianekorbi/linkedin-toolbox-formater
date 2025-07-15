@@ -203,31 +203,60 @@ export function toStrikethrough(text) {
  * @returns {Array<string>} - Liste des formatages détectés
  */
 export function detectFormatting(text) {
-  // À implémenter dans LIN-21 (formatages combinés)
+  if (!text || typeof text !== 'string') {
+    return [];
+  }
+
   const detectedFormats = [];
-  
-  // Détection du gras (Mathematical Bold)
-  // if (text.match(/[𝐀-𝐙𝐚-𝐳𝟎-𝟗]/)) {
-  //   detectedFormats.push('bold');
-  // }
-  
-  // Détection de l'italique (Mathematical Italic)
-  // if (text.match(/[𝐴-𝑍𝑎-𝑧]/)) {
-  //   detectedFormats.push('italic');
-  // }
-  
-  // Détection du soulignement (combining underline)
-  // if (text.includes('\\u0332')) {
-  //   detectedFormats.push('underline');
-  // }
-  
-  // Détection du barré (combining strikethrough)
-  // if (text.includes('\\u0336')) {
-  //   detectedFormats.push('strikethrough');
-  // }
-  
-  console.log('🔨 detectFormatting() - À implémenter dans LIN-21');
-  return detectedFormats;
+
+  try {
+    // Constantes pour les combining characters
+    const COMBINING_UNDERLINE = '\u0332';
+    const COMBINING_STRIKETHROUGH = '\u0336';
+
+    // Regex pour détecter les ranges Unicode des différents formatages
+    const unicodeRanges = {
+      // Mathematical Bold : 𝐀-𝐙 (U+1D400-U+1D419) + 𝐚-𝐳 (U+1D41A-U+1D433) + 𝟎-𝟗 (U+1D7CE-U+1D7D7)
+      bold: /[\u{1D400}-\u{1D419}\u{1D41A}-\u{1D433}\u{1D7CE}-\u{1D7D7}]/u,
+      
+      // Mathematical Sans-Serif Italic : 𝘈-𝘡 (U+1D608-U+1D621) + 𝘢-𝘻 (U+1D622-U+1D63B)
+      italic: /[\u{1D608}-\u{1D621}\u{1D622}-\u{1D63B}]/u,
+      
+      // Mathematical Monospace : 𝙰-𝚉 (U+1D670-U+1D689) + 𝚊-𝚣 (U+1D68A-U+1D6A3) + 𝟶-𝟿 (U+1D7F6-U+1D7FF)
+      monospace: /[\u{1D670}-\u{1D689}\u{1D68A}-\u{1D6A3}\u{1D7F6}-\u{1D7FF}]/u
+    };
+
+    // Détection du gras (Mathematical Bold)
+    if (unicodeRanges.bold.test(text)) {
+      detectedFormats.push('bold');
+    }
+
+    // Détection de l'italique (Mathematical Sans-Serif Italic)
+    if (unicodeRanges.italic.test(text)) {
+      detectedFormats.push('italic');
+    }
+
+    // Détection du soulignement (combining underline)
+    if (text.includes(COMBINING_UNDERLINE)) {
+      detectedFormats.push('underline');
+    }
+
+    // Détection du barré (combining strikethrough)
+    if (text.includes(COMBINING_STRIKETHROUGH)) {
+      detectedFormats.push('strikethrough');
+    }
+
+    console.log('🔍 Formatages détectés:', { 
+      text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+      detected: detectedFormats 
+    });
+
+    return detectedFormats;
+
+  } catch (error) {
+    console.error('❌ Erreur lors de la détection des formatages:', error);
+    return [];
+  }
 }
 
 /**

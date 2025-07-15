@@ -3,7 +3,7 @@
 
 import { selectionDetector } from './selection-detector.js';
 import { toolboxUI } from './toolbox.js';
-import { toBold, toItalic, toUnderline, toStrikethrough } from './unicode-formatters.js';
+import { toBold, toItalic, toUnderline, toStrikethrough, detectFormatting } from './unicode-formatters.js';
 import { LinkedInFieldAnalyzer } from './field-analyzer.js';
 
 console.log('🚀 LinkedIn Formateur Toolbox - Content Script chargé');
@@ -92,6 +92,13 @@ class LinkedInFormatterToolbox {
       fieldType: selectionData.fieldInfo.tagName,
       placeholder: selectionData.fieldInfo.placeholder.substring(0, 50)
     });
+
+    // LIN-33: Détecter les formatages existants
+    const existingFormats = detectFormatting(selectionData.text);
+    console.log('🔍 Formatages existants détectés:', existingFormats);
+
+    // Enrichir les données de sélection avec les formatages détectés
+    selectionData.existingFormats = existingFormats;
 
     // Afficher la toolbox
     this.showToolbox(selectionData);

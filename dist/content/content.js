@@ -955,19 +955,19 @@ function toItalic(text) {
     return text;
   }
 
-  // Tables de mapping Unicode Mathematical Italic
+  // Tables de mapping Unicode Mathematical Sans-Serif Italic (plus stable sur LinkedIn)
   const italicMappings = {
-    // Lettres majuscules A-Z → 𝐴-𝑍 (U+1D434-U+1D44D)
-    'A': '𝐴', 'B': '𝐵', 'C': '𝐶', 'D': '𝐷', 'E': '𝐸', 'F': '𝐹', 'G': '𝐺', 'H': '𝐻',
-    'I': '𝐼', 'J': '𝐽', 'K': '𝐾', 'L': '𝐿', 'M': '𝑀', 'N': '𝑁', 'O': '𝑂', 'P': '𝑃',
-    'Q': '𝑄', 'R': '𝑅', 'S': '𝑆', 'T': '𝑇', 'U': '𝑈', 'V': '𝑉', 'W': '𝑊', 'X': '𝑋',
-    'Y': '𝑌', 'Z': '𝑍',
+    // Lettres majuscules A-Z → 𝘈-𝘡 (U+1D608-U+1D621)
+    'A': '𝘈', 'B': '𝘉', 'C': '𝘊', 'D': '𝘋', 'E': '𝘌', 'F': '𝘍', 'G': '𝘎', 'H': '𝘏',
+    'I': '𝘐', 'J': '𝘑', 'K': '𝘒', 'L': '𝘓', 'M': '𝘔', 'N': '𝘕', 'O': '𝘖', 'P': '𝘗',
+    'Q': '𝘘', 'R': '𝘙', 'S': '𝘚', 'T': '𝘛', 'U': '𝘜', 'V': '𝘝', 'W': '𝘞', 'X': '𝘟',
+    'Y': '𝘠', 'Z': '𝘡',
     
-    // Lettres minuscules a-z → 𝑎-𝑧 (U+1D44E-U+1D467)
-    'a': '𝑎', 'b': '𝑏', 'c': '𝑐', 'd': '𝑑', 'e': '𝑒', 'f': '𝑓', 'g': '𝑔', 'h': '𝒉',
-    'i': '𝑖', 'j': '𝑗', 'k': '𝑘', 'l': '𝑙', 'm': '𝑚', 'n': '𝑛', 'o': '𝑜', 'p': '𝑝',
-    'q': '𝑞', 'r': '𝑟', 's': '𝑠', 't': '𝑡', 'u': '𝑢', 'v': '𝑣', 'w': '𝑤', 'x': '𝑥',
-    'y': '𝑦', 'z': '𝑧'
+    // Lettres minuscules a-z → 𝘢-𝘻 (U+1D622-U+1D63B)
+    'a': '𝘢', 'b': '𝘣', 'c': '𝘤', 'd': '𝘥', 'e': '𝘦', 'f': '𝘧', 'g': '𝘨', 'h': '𝘩',
+    'i': '𝘪', 'j': '𝘫', 'k': '𝘬', 'l': '𝘭', 'm': '𝘮', 'n': '𝘯', 'o': '𝘰', 'p': '𝘱',
+    'q': '𝘲', 'r': '𝘳', 's': '𝘴', 't': '𝘵', 'u': '𝘶', 'v': '𝘷', 'w': '𝘸', 'x': '𝘹',
+    'y': '𝘺', 'z': '𝘻'
     
     // Note: Les chiffres n'ont pas d'équivalent italique dans Unicode Mathematical
     // Ils restent en forme normale
@@ -1090,6 +1090,68 @@ function toStrikethrough(text) {
   } catch (error) {
     console.error('❌ Erreur lors du formatage barré:', error);
     return text; // Fallback vers le texte original
+  }
+}
+
+/**
+ * Détecte le type de formatage appliqué à un texte
+ * @param {string} text - Le texte à analyser
+ * @returns {Array<string>} - Liste des formatages détectés
+ */
+function detectFormatting(text) {
+  if (!text || typeof text !== 'string') {
+    return [];
+  }
+
+  const detectedFormats = [];
+
+  try {
+    // Constantes pour les combining characters
+    const COMBINING_UNDERLINE = '\u0332';
+    const COMBINING_STRIKETHROUGH = '\u0336';
+
+    // Regex pour détecter les ranges Unicode des différents formatages
+    const unicodeRanges = {
+      // Mathematical Bold : 𝐀-𝐙 (U+1D400-U+1D419) + 𝐚-𝐳 (U+1D41A-U+1D433) + 𝟎-𝟗 (U+1D7CE-U+1D7D7)
+      bold: /[\u{1D400}-\u{1D419}\u{1D41A}-\u{1D433}\u{1D7CE}-\u{1D7D7}]/u,
+      
+      // Mathematical Sans-Serif Italic : 𝘈-𝘡 (U+1D608-U+1D621) + 𝘢-𝘻 (U+1D622-U+1D63B)
+      italic: /[\u{1D608}-\u{1D621}\u{1D622}-\u{1D63B}]/u,
+      
+      // Mathematical Monospace : 𝙰-𝚉 (U+1D670-U+1D689) + 𝚊-𝚣 (U+1D68A-U+1D6A3) + 𝟶-𝟿 (U+1D7F6-U+1D7FF)
+      monospace: /[\u{1D670}-\u{1D689}\u{1D68A}-\u{1D6A3}\u{1D7F6}-\u{1D7FF}]/u
+    };
+
+    // Détection du gras (Mathematical Bold)
+    if (unicodeRanges.bold.test(text)) {
+      detectedFormats.push('bold');
+    }
+
+    // Détection de l'italique (Mathematical Sans-Serif Italic)
+    if (unicodeRanges.italic.test(text)) {
+      detectedFormats.push('italic');
+    }
+
+    // Détection du soulignement (combining underline)
+    if (text.includes(COMBINING_UNDERLINE)) {
+      detectedFormats.push('underline');
+    }
+
+    // Détection du barré (combining strikethrough)
+    if (text.includes(COMBINING_STRIKETHROUGH)) {
+      detectedFormats.push('strikethrough');
+    }
+
+    console.log('🔍 Formatages détectés:', { 
+      text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+      detected: detectedFormats 
+    });
+
+    return detectedFormats;
+
+  } catch (error) {
+    console.error('❌ Erreur lors de la détection des formatages:', error);
+    return [];
   }
 }
 
@@ -1497,6 +1559,9 @@ class LinkedInFormatterToolbox {
       fieldType: selectionData.fieldInfo.tagName,
       placeholder: selectionData.fieldInfo.placeholder.substring(0, 50)
     });
+    const existingFormats = detectFormatting(selectionData.text);
+    console.log("🔍 Formatages existants détectés:", existingFormats);
+    selectionData.existingFormats = existingFormats;
     this.showToolbox(selectionData);
   }
   /**
