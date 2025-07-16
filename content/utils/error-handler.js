@@ -1,7 +1,7 @@
 // LinkedIn Formateur Toolbox - Error Handler
 // Système de gestion d'erreurs centralisé et robuste
 
-import { CONFIG, log } from '../config/index.js';
+import { CONFIG, log } from '../../config/index.js';
 
 /**
  * Types d'erreurs de l'extension

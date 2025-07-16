@@ -2,7 +2,7 @@
 // Interface utilisateur de la toolbox flottante
 
 import { CONFIG, getConfig, log } from '../config/index.js';
-import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from '../utils/error-handler.js';
+import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from './utils/error-handler.js';
 
 /**
  * Classe principale pour la toolbox flottante

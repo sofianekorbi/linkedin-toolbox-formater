@@ -1,9 +1,9 @@
 // LinkedIn Formateur Toolbox - Text Formatter
 // Classe spécialisée pour la logique de formatage pure
 
-import { CONFIG } from '../config/index.js';
+import { CONFIG } from '../../config/index.js';
 import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from '../utils/error-handler.js';
-import { toBold, toItalic, toUnderline, toStrikethrough, toNormal, detectFormatting, applyIncrementalFormatting } from '../content/unicode-formatters.js';
+import { toBold, toItalic, toUnderline, toStrikethrough, toNormal, detectFormatting, applyIncrementalFormatting } from '../unicode-formatters.js';
 
 /**
  * Classe pour la logique de formatage pure

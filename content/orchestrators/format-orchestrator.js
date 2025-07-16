@@ -1,7 +1,7 @@
 // LinkedIn Formateur Toolbox - Format Orchestrator
 // Classe d'orchestration pour coordonner le formatage
 
-import { CONFIG, log } from '../config/index.js';
+import { CONFIG, log } from '../../config/index.js';
 import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from '../utils/error-handler.js';
 import { textFormatter } from '../formatters/text-formatter.js';
 import { uiManager } from '../ui/ui-manager.js';

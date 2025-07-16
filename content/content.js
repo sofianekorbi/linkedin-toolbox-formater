@@ -6,7 +6,7 @@ import { selectionDetector } from './selection-detector.js';
 import { toolboxUI } from './toolbox.js';
 import { formatHandler } from './format-handler.js';
 import { detectFormatting } from './unicode-formatters.js';
-import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from '../utils/error-handler.js';
+import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from './utils/error-handler.js';
 
 
 /**

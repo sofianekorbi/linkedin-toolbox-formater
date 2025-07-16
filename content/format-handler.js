@@ -3,8 +3,8 @@
 
 import { CONFIG, log } from '../config/index.js';
 import { toBold, toItalic, toUnderline, toStrikethrough, toNormal, detectFormatting, applyIncrementalFormatting } from './unicode-formatters.js';
-import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from '../utils/error-handler.js';
-import { formatOrchestrator } from '../orchestrators/format-orchestrator.js';
+import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from './utils/error-handler.js';
+import { formatOrchestrator } from './orchestrators/format-orchestrator.js';
 
 /**
  * Classe spécialisée pour la gestion du formatage

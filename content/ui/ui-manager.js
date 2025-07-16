@@ -1,7 +1,7 @@
 // LinkedIn Formateur Toolbox - UI Manager
 // Classe spécialisée pour la gestion UI pure
 
-import { CONFIG, log } from '../config/index.js';
+import { CONFIG, log } from '../../config/index.js';
 import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from '../utils/error-handler.js';
 
 /**

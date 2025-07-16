@@ -2,7 +2,7 @@
 // Détection intelligente de la sélection de texte dans les champs LinkedIn
 
 import { CONFIG, log } from '../config/index.js';
-import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from '../utils/error-handler.js';
+import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from './utils/error-handler.js';
 
 /**
  * Classe principale pour la détection de sélection
