@@ -1,72 +1,196 @@
+const CONFIG = {
+  // ===============================
+  // FORMATS SUPPORTÉS
+  // ===============================
+  formats: {
+    // Liste des formatages supportés par l'extension
+    supported: ["bold", "italic", "underline", "strikethrough"],
+    // Configuration pour chaque format
+    definitions: {
+      bold: {
+        id: "bold",
+        label: "B",
+        tooltip: "Gras",
+        className: "ltf-font-bold",
+        shortcut: "Ctrl+B"
+      },
+      italic: {
+        id: "italic",
+        label: "I",
+        tooltip: "Italique",
+        className: "ltf-italic",
+        shortcut: "Ctrl+I"
+      },
+      underline: {
+        id: "underline",
+        label: "U",
+        tooltip: "Souligné",
+        className: "ltf-underline",
+        shortcut: "Ctrl+U"
+      },
+      strikethrough: {
+        id: "strikethrough",
+        label: "S",
+        tooltip: "Barré",
+        className: "ltf-line-through",
+        shortcut: "Ctrl+Shift+S"
+      }
+    }
+  },
+  // ===============================
+  // INTERFACE UTILISATEUR
+  // ===============================
+  ui: {
+    // Configuration de la toolbox flottante
+    toolbox: {
+      // Dimensions
+      width: 160,
+      height: 40,
+      buttonSize: 32,
+      buttonSpacing: 4,
+      // Positionnement
+      offsetTop: 10,
+      offsetBottom: 10,
+      offsetSides: 10,
+      // Animations
+      animationDuration: 200,
+      fadeOutDuration: 150,
+      // Styles
+      zIndex: 1e4,
+      cssPrefix: "ltf-",
+      // Couleurs
+      colors: {
+        background: "#ffffff",
+        border: "#e1e5e9",
+        text: "#666666",
+        textHover: "#0a66c2",
+        backgroundHover: "#f3f2ef",
+        backgroundActive: "#e1e5e9"
+      },
+      // Styles CSS
+      styles: {
+        borderRadius: "6px",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        fontSize: "14px",
+        fontWeight: "600"
+      }
+    },
+    // Configuration des boutons
+    buttons: {
+      borderRadius: "4px",
+      transition: "all 0.1s ease",
+      clickFeedbackDuration: 100
+    }
+  },
+  // ===============================
+  // DÉTECTION DE SÉLECTION
+  // ===============================
+  detection: {
+    // Délais et timing
+    debounceDelay: 100,
+    stabilizationDelay: 10,
+    // Validation de sélection
+    minSelectionLength: 1,
+    // Classes et attributs à exclure
+    excludeClasses: [
+      "ltf-extension",
+      "ltf-toolbox",
+      "linkedin-ads",
+      "ad-banner",
+      "sponsored-content"
+    ],
+    // Attributs indiquant un champ en lecture seule
+    readOnlyAttributes: [
+      "readonly",
+      "disabled",
+      "aria-readonly"
+    ],
+    // Sélecteurs CSS pour identifier les champs LinkedIn
+    linkedinSelectors: [
+      // Champs de création de posts
+      '[data-placeholder*="partager"]',
+      `[data-placeholder*="What's"]`,
+      '[data-placeholder*="share"]',
+      '.ql-editor[contenteditable="true"]',
+      '[role="textbox"]',
+      // Champs de commentaires
+      '[data-placeholder*="comment"]',
+      '[data-placeholder*="Add a comment"]',
+      '[data-placeholder*="commentaire"]',
+      ".comments-comment-box__form textarea",
+      ".comments-comment-texteditor",
+      // Messages privés
+      '[data-placeholder*="message"]',
+      '[data-placeholder*="Write a message"]',
+      '[data-placeholder*="Rédigez"]',
+      ".msg-form__contenteditable",
+      ".msg-form__compose",
+      // Champs de profil et autres
+      '[data-placeholder*="headline"]',
+      '[data-placeholder*="summary"]',
+      '[data-placeholder*="experience"]',
+      'textarea[name*="summary"]',
+      'textarea[name*="description"]',
+      // Sélecteurs génériques pour LinkedIn
+      'div[contenteditable="true"]',
+      "textarea",
+      'input[type="text"]',
+      ".editor-content",
+      '[data-editor="true"]'
+    ],
+    // Classes parentes LinkedIn pour validation de contexte
+    contextValidation: {
+      maxDepth: 10,
+      linkedinClasses: [
+        "feed-shared-update-v2",
+        "comments-comment-box",
+        "msg-form",
+        "artdeco-card",
+        "feed-shared-text",
+        "share-creation-state",
+        "editor-content"
+      ]
+    }
+  },
+  // ===============================
+  // PERFORMANCE
+  // ===============================
+  performance: {
+    // MB
+    // Optimisations
+    cleanupInterval: 3e4},
+  // ===============================
+  // SÉCURITÉ
+  // ===============================
+  security: {
+    // Domaines autorisés
+    allowedDomains: [
+      "linkedin.com",
+      "*.linkedin.com"
+    ]},
+  // ===============================
+  // MÉTADONNÉES
+  // ===============================
+  meta: {
+    // Mise à jour
+    lastUpdated: (/* @__PURE__ */ new Date()).toISOString()}
+};
+function isDomainAllowed(domain) {
+  return CONFIG.security.allowedDomains.some((allowed) => {
+    if (allowed.startsWith("*.")) {
+      return domain.endsWith(allowed.slice(2));
+    }
+    return domain === allowed;
+  });
+}
+function log(level, message, ...args) {
+  return;
+}
+
 // LinkedIn Formateur Toolbox - Selection Detector
 // Détection intelligente de la sélection de texte dans les champs LinkedIn
 
-/**
- * Sélecteurs pour identifier les champs de saisie LinkedIn
- * Ces sélecteurs sont basés sur l'analyse de la structure DOM de LinkedIn
- */
-const LINKEDIN_INPUT_SELECTORS = [
-  // Champs de création de posts
-  '[data-placeholder*="partager"]',
-  '[data-placeholder*="What\'s"]',
-  '[data-placeholder*="share"]',
-  '.ql-editor[contenteditable="true"]', // Editeur principal
-  '[role="textbox"]',
-  
-  // Champs de commentaires
-  '[data-placeholder*="comment"]',
-  '[data-placeholder*="Add a comment"]',
-  '[data-placeholder*="commentaire"]',
-  '.comments-comment-box__form textarea',
-  '.comments-comment-texteditor',
-  
-  // Messages privés
-  '[data-placeholder*="message"]',
-  '[data-placeholder*="Write a message"]',
-  '[data-placeholder*="Rédigez"]',
-  '.msg-form__contenteditable',
-  '.msg-form__compose',
-  
-  // Champs de profil et autres
-  '[data-placeholder*="headline"]',
-  '[data-placeholder*="summary"]',
-  '[data-placeholder*="experience"]',
-  'textarea[name*="summary"]',
-  'textarea[name*="description"]',
-  
-  // Sélecteurs génériques pour LinkedIn
-  'div[contenteditable="true"]',
-  'textarea',
-  'input[type="text"]',
-  '.editor-content',
-  '[data-editor="true"]'
-];
-
-/**
- * Configuration de la détection
- */
-const DETECTION_CONFIG = {
-  // Délai minimum avant de considérer une nouvelle sélection
-  debounceDelay: 100,
-  
-  // Longueur minimale de texte sélectionné
-  minSelectionLength: 1,
-  
-  // Classes LinkedIn à éviter (pour ne pas interférer)
-  excludeClasses: [
-    'lt-extension',
-    'ltf-toolbox',
-    'linkedin-ads',
-    'ad-banner'
-  ],
-  
-  // Attributs indiquant un champ en lecture seule
-  readOnlyAttributes: [
-    'readonly',
-    'disabled',
-    'aria-readonly'
-  ]
-};
 
 /**
  * Classe principale pour la détection de sélection
@@ -93,6 +217,7 @@ class SelectionDetector {
       return;
     }
 
+    log();
     
     // Événements globaux
     document.addEventListener('selectionchange', this.handleSelectionChange, true);
@@ -103,6 +228,7 @@ class SelectionDetector {
     this.observeNewFields();
     
     this.isInitialized = true;
+    log();
   }
 
   /**
@@ -132,7 +258,10 @@ class SelectionDetector {
    * Vérifie s'il y a de nouveaux champs LinkedIn dans un élément
    */
   checkForLinkedInFields(element) {
-    LINKEDIN_INPUT_SELECTORS.forEach(selector => {
+    const selectors = CONFIG.detection.linkedinSelectors;
+    log('debug', 'Checking for LinkedIn fields', { selectors: selectors.length });
+    
+    selectors.forEach(selector => {
       try {
         const fields = element.querySelectorAll(selector);
         fields.forEach(field => {
@@ -142,6 +271,7 @@ class SelectionDetector {
         });
       } catch (error) {
         // Sélecteur invalide, on l'ignore
+        log('debug', 'Invalid selector ignored', { selector, error: error.message });
       }
     });
   }
@@ -161,16 +291,20 @@ class SelectionDetector {
    * Vérifie si c'est un champ LinkedIn valide
    */
   isValidLinkedInField(field) {
+    const detectionConfig = CONFIG.detection;
+    
     // Vérifier si c'est en lecture seule
-    for (const attr of DETECTION_CONFIG.readOnlyAttributes) {
+    for (const attr of detectionConfig.readOnlyAttributes) {
       if (field.hasAttribute(attr) && field.getAttribute(attr) !== 'false') {
+        log('debug', 'Field rejected: readonly', { field: field.tagName, attr });
         return false;
       }
     }
 
     // Vérifier les classes à exclure
-    for (const className of DETECTION_CONFIG.excludeClasses) {
+    for (const className of detectionConfig.excludeClasses) {
       if (field.classList.contains(className)) {
+        log('debug', 'Field rejected: excluded class', { field: field.tagName, className });
         return false;
       }
     }
@@ -185,30 +319,32 @@ class SelectionDetector {
   isInLinkedInContext(element) {
     // Vérifier l'URL
     if (!window.location.hostname.includes('linkedin.com')) {
+      log();
       return false;
     }
 
     // Vérifier les classes parentes LinkedIn
     let parent = element.parentElement;
     let depth = 0;
-    const maxDepth = 10;
+    const contextConfig = CONFIG.detection.contextValidation;
+    const maxDepth = contextConfig.maxDepth;
 
     while (parent && depth < maxDepth) {
       const classList = parent.classList;
       
       // Classes LinkedIn communes
-      if (classList.contains('feed-shared-update-v2') ||
-          classList.contains('comments-comment-box') ||
-          classList.contains('msg-form') ||
-          classList.contains('artdeco-card') ||
-          classList.contains('feed-shared-text')) {
-        return true;
+      for (const linkedinClass of contextConfig.linkedinClasses) {
+        if (classList.contains(linkedinClass)) {
+          log('debug', 'Found LinkedIn context', { class: linkedinClass, depth });
+          return true;
+        }
       }
 
       parent = parent.parentElement;
       depth++;
     }
 
+    log();
     return true; // Par défaut, accepter si on est sur LinkedIn
   }
 
@@ -226,7 +362,7 @@ class SelectionDetector {
     // Délai court pour laisser la sélection se stabiliser
     setTimeout(() => {
       this.processSelection();
-    }, 10);
+    }, CONFIG.detection.stabilizationDelay);
   }
 
   /**
@@ -251,7 +387,7 @@ class SelectionDetector {
 
     this.debounceTimer = setTimeout(() => {
       this.processSelection();
-    }, DETECTION_CONFIG.debounceDelay);
+    }, CONFIG.detection.debounceDelay);
   }
 
   /**
@@ -269,7 +405,8 @@ class SelectionDetector {
     const selectedText = selection.toString().trim();
 
     // Vérifier la longueur minimale
-    if (selectedText.length < DETECTION_CONFIG.minSelectionLength) {
+    if (selectedText.length < CONFIG.detection.minSelectionLength) {
+      log('debug', 'Selection too short', { length: selectedText.length });
       this.clearSelection();
       return;
     }
@@ -308,7 +445,7 @@ class SelectionDetector {
         }
 
         // Vérifier avec les sélecteurs
-        for (const selector of LINKEDIN_INPUT_SELECTORS) {
+        for (const selector of CONFIG.detection.linkedinSelectors) {
           try {
             if (current.matches(selector) && this.isValidLinkedInField(current)) {
               this.monitorField(current); // L'ajouter à la surveillance
@@ -316,6 +453,7 @@ class SelectionDetector {
             }
           } catch (error) {
             // Sélecteur invalide
+            log('debug', 'Invalid selector in findLinkedInField', { selector, error: error.message });
           }
         }
       }
@@ -349,6 +487,10 @@ class SelectionDetector {
     this.currentSelection = selectionData;
     this.currentField = selectionData.field;
 
+    log('info', 'Selection set', { 
+      text: selectionData.text.substring(0, 50) + '...', 
+      fieldType: selectionData.fieldInfo.tagName 
+    });
 
     // Notifier les handlers
     this.notifySelectionHandlers('selection', selectionData);
@@ -359,6 +501,7 @@ class SelectionDetector {
    */
   clearSelection() {
     if (this.currentSelection) {
+      log();
       
       // Notifier les handlers
       this.notifySelectionHandlers('deselection', {
@@ -429,6 +572,7 @@ class SelectionDetector {
     this.currentField = null;
     this.isInitialized = false;
 
+    log();
   }
 }
 
@@ -438,57 +582,6 @@ const selectionDetector = new SelectionDetector();
 // LinkedIn Formateur Toolbox - Toolbox UI Component
 // Interface utilisateur de la toolbox flottante
 
-/**
- * Configuration de la toolbox
- */
-const TOOLBOX_CONFIG = {
-  // Dimensions
-  width: 160,
-  height: 40,
-  buttonSize: 32,
-  // Positionnement
-  offsetTop: 10,
-  offsetBottom: 10,
-  offsetSides: 10,
-  
-  // Animations
-  animationDuration: 200,
-  fadeOutDuration: 150,
-  
-  // Z-index
-  zIndex: 10000,
-  
-  // Classes CSS
-  cssPrefix: 'ltf-',
-  
-  // Boutons de formatage
-  buttons: [
-    {
-      id: 'bold',
-      label: 'B',
-      tooltip: 'Gras',
-      className: 'ltf-font-bold'
-    },
-    {
-      id: 'italic',
-      label: 'I',
-      tooltip: 'Italique', 
-      className: 'ltf-italic'
-    },
-    {
-      id: 'underline',
-      label: 'U',
-      tooltip: 'Souligné',
-      className: 'ltf-underline'
-    },
-    {
-      id: 'strikethrough',
-      label: 'S',
-      tooltip: 'Barré',
-      className: 'ltf-line-through'
-    }
-  ]
-};
 
 /**
  * Classe principale pour la toolbox flottante
@@ -514,6 +607,7 @@ class ToolboxUI {
    * Initialise la toolbox
    */
   init() {
+    log();
     
     // Créer l'élément toolbox
     this.createToolboxElement();
@@ -522,6 +616,7 @@ class ToolboxUI {
     document.addEventListener('click', this.handleDocumentClick, true);
     document.addEventListener('keydown', this.handleKeyDown, true);
     
+    log();
   }
 
   /**
@@ -533,45 +628,48 @@ class ToolboxUI {
       this.toolboxElement.remove();
     }
 
+    const toolboxConfig = CONFIG.ui.toolbox;
+    const cssPrefix = toolboxConfig.cssPrefix;
+
     // Créer le conteneur principal
     this.toolboxElement = document.createElement('div');
     this.toolboxElement.id = 'ltf-toolbox';
     this.toolboxElement.className = `
-      ${TOOLBOX_CONFIG.cssPrefix}fixed
-      ${TOOLBOX_CONFIG.cssPrefix}bg-toolbox-bg
-      ${TOOLBOX_CONFIG.cssPrefix}border
-      ${TOOLBOX_CONFIG.cssPrefix}border-toolbox-border
-      ${TOOLBOX_CONFIG.cssPrefix}rounded-toolbox
-      ${TOOLBOX_CONFIG.cssPrefix}shadow-toolbox
-      ${TOOLBOX_CONFIG.cssPrefix}flex
-      ${TOOLBOX_CONFIG.cssPrefix}items-center
-      ${TOOLBOX_CONFIG.cssPrefix}gap-1
-      ${TOOLBOX_CONFIG.cssPrefix}p-1
-      ${TOOLBOX_CONFIG.cssPrefix}opacity-0
-      ${TOOLBOX_CONFIG.cssPrefix}pointer-events-none
-      ${TOOLBOX_CONFIG.cssPrefix}transition-all
-      ${TOOLBOX_CONFIG.cssPrefix}duration-200
+      ${cssPrefix}fixed
+      ${cssPrefix}bg-toolbox-bg
+      ${cssPrefix}border
+      ${cssPrefix}border-toolbox-border
+      ${cssPrefix}rounded-toolbox
+      ${cssPrefix}shadow-toolbox
+      ${cssPrefix}flex
+      ${cssPrefix}items-center
+      ${cssPrefix}gap-1
+      ${cssPrefix}p-1
+      ${cssPrefix}opacity-0
+      ${cssPrefix}pointer-events-none
+      ${cssPrefix}transition-all
+      ${cssPrefix}duration-200
     `.trim().replace(/\s+/g, ' ');
 
     // Styles inline pour garantir le bon affichage
     this.toolboxElement.style.cssText = `
       position: fixed;
-      z-index: ${TOOLBOX_CONFIG.zIndex};
-      width: ${TOOLBOX_CONFIG.width}px;
-      height: ${TOOLBOX_CONFIG.height}px;
-      background: #ffffff;
-      border: 1px solid #e1e5e9;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+      z-index: ${toolboxConfig.zIndex};
+      width: ${toolboxConfig.width}px;
+      height: ${toolboxConfig.height}px;
+      background: ${toolboxConfig.colors.background};
+      border: 1px solid ${toolboxConfig.colors.border};
+      border-radius: ${toolboxConfig.styles.borderRadius};
+      box-shadow: ${toolboxConfig.styles.boxShadow};
       display: flex;
       align-items: center;
-      gap: 4px;
-      padding: 4px;
+      gap: ${toolboxConfig.buttonSpacing}px;
+      padding: ${toolboxConfig.buttonSpacing}px;
       opacity: 0;
       pointer-events: none;
       transition: all 0.2s ease-out;
       transform: translateY(8px);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: ${toolboxConfig.styles.fontFamily};
     `;
 
     // Créer les boutons
@@ -585,55 +683,61 @@ class ToolboxUI {
    * Crée les boutons de formatage
    */
   createButtons() {
-    TOOLBOX_CONFIG.buttons.forEach(buttonConfig => {
+    const formatConfig = CONFIG.formats.definitions;
+    const toolboxConfig = CONFIG.ui.toolbox;
+    const buttonConfig = CONFIG.ui.buttons;
+    
+    log('info', 'Creating toolbox buttons', Object.keys(formatConfig));
+    
+    Object.values(formatConfig).forEach(format => {
       const button = document.createElement('button');
-      button.id = `ltf-btn-${buttonConfig.id}`;
-      button.className = `ltf-toolbox-btn ltf-btn-${buttonConfig.id}`;
-      button.setAttribute('data-format', buttonConfig.id);
-      button.setAttribute('title', buttonConfig.tooltip);
-      button.textContent = buttonConfig.label;
+      button.id = `ltf-btn-${format.id}`;
+      button.className = `ltf-toolbox-btn ltf-btn-${format.id}`;
+      button.setAttribute('data-format', format.id);
+      button.setAttribute('title', format.tooltip);
+      button.textContent = format.label;
 
       // Styles inline pour les boutons
       button.style.cssText = `
-        width: ${TOOLBOX_CONFIG.buttonSize}px;
-        height: ${TOOLBOX_CONFIG.buttonSize}px;
+        width: ${toolboxConfig.buttonSize}px;
+        height: ${toolboxConfig.buttonSize}px;
         border: none;
-        border-radius: 4px;
+        border-radius: ${buttonConfig.borderRadius};
         background: transparent;
-        color: #666666;
-        font-size: 14px;
-        font-weight: 600;
+        color: ${toolboxConfig.colors.text};
+        font-size: ${toolboxConfig.styles.fontSize};
+        font-weight: ${toolboxConfig.styles.fontWeight};
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.1s ease;
+        transition: ${buttonConfig.transition};
         user-select: none;
         -webkit-user-select: none;
       `;
 
       // Ajouter les styles spécifiques au bouton
-      if (buttonConfig.className) {
-        if (buttonConfig.id === 'bold') {
+      if (format.className) {
+        if (format.id === 'bold') {
           button.style.fontWeight = 'bold';
-        } else if (buttonConfig.id === 'italic') {
+        } else if (format.id === 'italic') {
           button.style.fontStyle = 'italic';
-        } else if (buttonConfig.id === 'underline') {
+        } else if (format.id === 'underline') {
           button.style.textDecoration = 'underline';
-        } else if (buttonConfig.id === 'strikethrough') {
+        } else if (format.id === 'strikethrough') {
           button.style.textDecoration = 'line-through';
         }
       }
 
       // Événements hover
       button.addEventListener('mouseenter', () => {
-        button.style.backgroundColor = '#f3f2ef';
-        button.style.color = '#0a66c2';
+        button.style.backgroundColor = toolboxConfig.colors.backgroundHover;
+        button.style.color = toolboxConfig.colors.textHover;
       });
 
       button.addEventListener('mouseleave', () => {
         button.style.backgroundColor = 'transparent';
-        button.style.color = '#666666';
+        button.style.color = toolboxConfig.colors.text;
       });
 
       // Événement clic
@@ -671,9 +775,11 @@ class ToolboxUI {
     const range = selectionData.range;
     const rect = range.getBoundingClientRect();
     
+    const toolboxConfig = CONFIG.ui.toolbox;
+    
     // Position par défaut : au-dessus du texte sélectionné
-    let x = rect.left + (rect.width / 2) - (TOOLBOX_CONFIG.width / 2);
-    let y = rect.top - TOOLBOX_CONFIG.height - TOOLBOX_CONFIG.offsetTop;
+    let x = rect.left + (rect.width / 2) - (toolboxConfig.width / 2);
+    let y = rect.top - toolboxConfig.height - toolboxConfig.offsetTop;
 
     // Ajustements pour les débordements
     const viewport = {
@@ -682,20 +788,20 @@ class ToolboxUI {
     };
 
     // Ajustement horizontal
-    if (x < TOOLBOX_CONFIG.offsetSides) {
-      x = TOOLBOX_CONFIG.offsetSides;
-    } else if (x + TOOLBOX_CONFIG.width > viewport.width - TOOLBOX_CONFIG.offsetSides) {
-      x = viewport.width - TOOLBOX_CONFIG.width - TOOLBOX_CONFIG.offsetSides;
+    if (x < toolboxConfig.offsetSides) {
+      x = toolboxConfig.offsetSides;
+    } else if (x + toolboxConfig.width > viewport.width - toolboxConfig.offsetSides) {
+      x = viewport.width - toolboxConfig.width - toolboxConfig.offsetSides;
     }
 
     // Ajustement vertical - si pas assez de place en haut, mettre en bas
-    if (y < TOOLBOX_CONFIG.offsetTop) {
-      y = rect.bottom + TOOLBOX_CONFIG.offsetBottom;
+    if (y < toolboxConfig.offsetTop) {
+      y = rect.bottom + toolboxConfig.offsetBottom;
     }
 
     // Vérifier que la toolbox reste dans le viewport
-    if (y + TOOLBOX_CONFIG.height > viewport.height - TOOLBOX_CONFIG.offsetBottom) {
-      y = viewport.height - TOOLBOX_CONFIG.height - TOOLBOX_CONFIG.offsetBottom;
+    if (y + toolboxConfig.height > viewport.height - toolboxConfig.offsetBottom) {
+      y = viewport.height - toolboxConfig.height - toolboxConfig.offsetBottom;
     }
 
     return { x, y };
@@ -717,7 +823,7 @@ class ToolboxUI {
     // Fin de l'animation
     setTimeout(() => {
       this.isAnimating = false;
-    }, TOOLBOX_CONFIG.animationDuration);
+    }, CONFIG.ui.toolbox.animationDuration);
   }
 
   /**
@@ -739,7 +845,7 @@ class ToolboxUI {
     setTimeout(() => {
       this.currentSelection = null;
       this.isAnimating = false;
-    }, TOOLBOX_CONFIG.fadeOutDuration);
+    }, CONFIG.ui.toolbox.fadeOutDuration);
   }
 
   /**
@@ -754,10 +860,10 @@ class ToolboxUI {
 
 
     // Ajouter effet visuel de clic
-    button.style.backgroundColor = '#e1e5e9';
+    button.style.backgroundColor = CONFIG.ui.toolbox.colors.backgroundActive;
     setTimeout(() => {
       button.style.backgroundColor = 'transparent';
-    }, 100);
+    }, CONFIG.ui.buttons.clickFeedbackDuration);
 
     // Déclencher le formatage
     this.triggerFormatting(formatType);
@@ -1315,8 +1421,11 @@ class LinkedInFormatterToolbox {
     }
 
     try {
+      log('info', 'Initializing LinkedIn Formatter Toolbox');
+      
       // Vérifier qu'on est bien sur LinkedIn
       if (!this.isLinkedInPage()) {
+        log('warn', 'Not on LinkedIn page, skipping initialization');
         return;
       }
 
@@ -1330,9 +1439,10 @@ class LinkedInFormatterToolbox {
       this.registerFormatHandlers();
 
       this.isInitialized = true;
+      log('info', 'LinkedIn Formatter Toolbox initialized successfully');
 
     } catch (error) {
-      // Silently fail in production
+      log('error', 'Failed to initialize extension', error);
     }
   }
 
@@ -1340,7 +1450,10 @@ class LinkedInFormatterToolbox {
    * Vérifie si on est sur une page LinkedIn
    */
   isLinkedInPage() {
-    return window.location.hostname.includes('linkedin.com');
+    const hostname = window.location.hostname;
+    const isAllowed = isDomainAllowed(hostname);
+    log('debug', 'Checking LinkedIn page', { hostname, isAllowed });
+    return isAllowed;
   }
 
   /**
@@ -1360,6 +1473,11 @@ class LinkedInFormatterToolbox {
   onTextSelected(selectionData) {
     this.currentSelection = selectionData;
     
+    log('info', 'Text selected', { 
+      length: selectionData.text.length,
+      fieldType: selectionData.fieldInfo.tagName
+    });
+    
     // LIN-33: Détecter les formatages existants
     const existingFormats = detectFormatting(selectionData.text);
 
@@ -1376,6 +1494,8 @@ class LinkedInFormatterToolbox {
   onTextDeselected(data) {
     this.currentSelection = null;
 
+    log();
+    
     // Masquer la toolbox
     this.hideToolbox();
   }
@@ -1399,24 +1519,15 @@ class LinkedInFormatterToolbox {
    * Enregistre les handlers de formatage
    */
   registerFormatHandlers() {
-    // Handler pour le formatage gras
-    toolboxUI.addFormatHandler('bold', (selectionData, formatType) => {
-      this.applyFormatting(selectionData, formatType);
-    });
-
-    // Handler pour le formatage italique
-    toolboxUI.addFormatHandler('italic', (selectionData, formatType) => {
-      this.applyFormatting(selectionData, formatType);
-    });
-
-    // Handler pour le formatage souligné
-    toolboxUI.addFormatHandler('underline', (selectionData, formatType) => {
-      this.applyFormatting(selectionData, formatType);
-    });
-
-    // Handler pour le formatage barré
-    toolboxUI.addFormatHandler('strikethrough', (selectionData, formatType) => {
-      this.applyFormatting(selectionData, formatType);
+    const supportedFormats = CONFIG.formats.supported;
+    
+    log('info', 'Registering format handlers', { formats: supportedFormats });
+    
+    // Enregistrer un handler pour chaque format supporté
+    supportedFormats.forEach(formatType => {
+      toolboxUI.addFormatHandler(formatType, (selectionData, formatType) => {
+        this.applyFormatting(selectionData, formatType);
+      });
     });
   }
 
@@ -1426,6 +1537,12 @@ class LinkedInFormatterToolbox {
   applyFormatting(selectionData, formatType) {
     try {
       const existingFormats = selectionData.existingFormats || [];
+      
+      log('info', 'Applying formatting', { 
+        formatType, 
+        existingFormats,
+        textLength: selectionData.text.length
+      });
       
       // Utiliser la logique simplifiée pour tous les cas
       const formattedText = applyIncrementalFormatting(
@@ -1438,7 +1555,7 @@ class LinkedInFormatterToolbox {
       this.replaceSelectedText(selectionData, formattedText);
 
     } catch (error) {
-      // Silently fail in production
+      log('error', 'Failed to apply formatting', { formatType, error });
     }
   }
 
@@ -1488,7 +1605,7 @@ class LinkedInFormatterToolbox {
       }
 
     } catch (error) {
-      // Silently fail in production
+      log('error', 'Failed to replace selected text', error);
     }
   }
 
@@ -1524,6 +1641,8 @@ class LinkedInFormatterToolbox {
   destroy() {
     if (!this.isInitialized) return;
 
+    log();
+
     // Nettoyer le détecteur de sélection
     selectionDetector.removeSelectionHandler(this.handleSelectionEvent);
     selectionDetector.destroy();
@@ -1533,6 +1652,8 @@ class LinkedInFormatterToolbox {
 
     this.currentSelection = null;
     this.isInitialized = false;
+    
+    log();
   }
 }
 
@@ -1560,7 +1681,7 @@ const observer = new MutationObserver(() => {
     setTimeout(() => {
       toolbox.destroy();
       toolbox.init();
-    }, 1000);
+    }, CONFIG.performance.cleanupInterval / 30); // 1 seconde par défaut
   }
 });
 

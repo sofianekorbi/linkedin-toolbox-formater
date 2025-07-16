@@ -1,59 +1,7 @@
 // LinkedIn Formateur Toolbox - Toolbox UI Component
 // Interface utilisateur de la toolbox flottante
 
-/**
- * Configuration de la toolbox
- */
-const TOOLBOX_CONFIG = {
-  // Dimensions
-  width: 160,
-  height: 40,
-  buttonSize: 32,
-  buttonSpacing: 4,
-  
-  // Positionnement
-  offsetTop: 10,
-  offsetBottom: 10,
-  offsetSides: 10,
-  
-  // Animations
-  animationDuration: 200,
-  fadeOutDuration: 150,
-  
-  // Z-index
-  zIndex: 10000,
-  
-  // Classes CSS
-  cssPrefix: 'ltf-',
-  
-  // Boutons de formatage
-  buttons: [
-    {
-      id: 'bold',
-      label: 'B',
-      tooltip: 'Gras',
-      className: 'ltf-font-bold'
-    },
-    {
-      id: 'italic',
-      label: 'I',
-      tooltip: 'Italique', 
-      className: 'ltf-italic'
-    },
-    {
-      id: 'underline',
-      label: 'U',
-      tooltip: 'Souligné',
-      className: 'ltf-underline'
-    },
-    {
-      id: 'strikethrough',
-      label: 'S',
-      tooltip: 'Barré',
-      className: 'ltf-line-through'
-    }
-  ]
-};
+import { CONFIG, getConfig, log } from '../config/index.js';
 
 /**
  * Classe principale pour la toolbox flottante
@@ -79,6 +27,7 @@ class ToolboxUI {
    * Initialise la toolbox
    */
   init() {
+    log('info', 'Initializing toolbox UI');
     
     // Créer l'élément toolbox
     this.createToolboxElement();
@@ -87,6 +36,7 @@ class ToolboxUI {
     document.addEventListener('click', this.handleDocumentClick, true);
     document.addEventListener('keydown', this.handleKeyDown, true);
     
+    log('info', 'Toolbox UI initialized successfully');
   }
 
   /**
@@ -98,45 +48,48 @@ class ToolboxUI {
       this.toolboxElement.remove();
     }
 
+    const toolboxConfig = CONFIG.ui.toolbox;
+    const cssPrefix = toolboxConfig.cssPrefix;
+
     // Créer le conteneur principal
     this.toolboxElement = document.createElement('div');
     this.toolboxElement.id = 'ltf-toolbox';
     this.toolboxElement.className = `
-      ${TOOLBOX_CONFIG.cssPrefix}fixed
-      ${TOOLBOX_CONFIG.cssPrefix}bg-toolbox-bg
-      ${TOOLBOX_CONFIG.cssPrefix}border
-      ${TOOLBOX_CONFIG.cssPrefix}border-toolbox-border
-      ${TOOLBOX_CONFIG.cssPrefix}rounded-toolbox
-      ${TOOLBOX_CONFIG.cssPrefix}shadow-toolbox
-      ${TOOLBOX_CONFIG.cssPrefix}flex
-      ${TOOLBOX_CONFIG.cssPrefix}items-center
-      ${TOOLBOX_CONFIG.cssPrefix}gap-1
-      ${TOOLBOX_CONFIG.cssPrefix}p-1
-      ${TOOLBOX_CONFIG.cssPrefix}opacity-0
-      ${TOOLBOX_CONFIG.cssPrefix}pointer-events-none
-      ${TOOLBOX_CONFIG.cssPrefix}transition-all
-      ${TOOLBOX_CONFIG.cssPrefix}duration-200
+      ${cssPrefix}fixed
+      ${cssPrefix}bg-toolbox-bg
+      ${cssPrefix}border
+      ${cssPrefix}border-toolbox-border
+      ${cssPrefix}rounded-toolbox
+      ${cssPrefix}shadow-toolbox
+      ${cssPrefix}flex
+      ${cssPrefix}items-center
+      ${cssPrefix}gap-1
+      ${cssPrefix}p-1
+      ${cssPrefix}opacity-0
+      ${cssPrefix}pointer-events-none
+      ${cssPrefix}transition-all
+      ${cssPrefix}duration-200
     `.trim().replace(/\s+/g, ' ');
 
     // Styles inline pour garantir le bon affichage
     this.toolboxElement.style.cssText = `
       position: fixed;
-      z-index: ${TOOLBOX_CONFIG.zIndex};
-      width: ${TOOLBOX_CONFIG.width}px;
-      height: ${TOOLBOX_CONFIG.height}px;
-      background: #ffffff;
-      border: 1px solid #e1e5e9;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+      z-index: ${toolboxConfig.zIndex};
+      width: ${toolboxConfig.width}px;
+      height: ${toolboxConfig.height}px;
+      background: ${toolboxConfig.colors.background};
+      border: 1px solid ${toolboxConfig.colors.border};
+      border-radius: ${toolboxConfig.styles.borderRadius};
+      box-shadow: ${toolboxConfig.styles.boxShadow};
       display: flex;
       align-items: center;
-      gap: 4px;
-      padding: 4px;
+      gap: ${toolboxConfig.buttonSpacing}px;
+      padding: ${toolboxConfig.buttonSpacing}px;
       opacity: 0;
       pointer-events: none;
       transition: all 0.2s ease-out;
       transform: translateY(8px);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: ${toolboxConfig.styles.fontFamily};
     `;
 
     // Créer les boutons
@@ -150,55 +103,61 @@ class ToolboxUI {
    * Crée les boutons de formatage
    */
   createButtons() {
-    TOOLBOX_CONFIG.buttons.forEach(buttonConfig => {
+    const formatConfig = CONFIG.formats.definitions;
+    const toolboxConfig = CONFIG.ui.toolbox;
+    const buttonConfig = CONFIG.ui.buttons;
+    
+    log('info', 'Creating toolbox buttons', Object.keys(formatConfig));
+    
+    Object.values(formatConfig).forEach(format => {
       const button = document.createElement('button');
-      button.id = `ltf-btn-${buttonConfig.id}`;
-      button.className = `ltf-toolbox-btn ltf-btn-${buttonConfig.id}`;
-      button.setAttribute('data-format', buttonConfig.id);
-      button.setAttribute('title', buttonConfig.tooltip);
-      button.textContent = buttonConfig.label;
+      button.id = `ltf-btn-${format.id}`;
+      button.className = `ltf-toolbox-btn ltf-btn-${format.id}`;
+      button.setAttribute('data-format', format.id);
+      button.setAttribute('title', format.tooltip);
+      button.textContent = format.label;
 
       // Styles inline pour les boutons
       button.style.cssText = `
-        width: ${TOOLBOX_CONFIG.buttonSize}px;
-        height: ${TOOLBOX_CONFIG.buttonSize}px;
+        width: ${toolboxConfig.buttonSize}px;
+        height: ${toolboxConfig.buttonSize}px;
         border: none;
-        border-radius: 4px;
+        border-radius: ${buttonConfig.borderRadius};
         background: transparent;
-        color: #666666;
-        font-size: 14px;
-        font-weight: 600;
+        color: ${toolboxConfig.colors.text};
+        font-size: ${toolboxConfig.styles.fontSize};
+        font-weight: ${toolboxConfig.styles.fontWeight};
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.1s ease;
+        transition: ${buttonConfig.transition};
         user-select: none;
         -webkit-user-select: none;
       `;
 
       // Ajouter les styles spécifiques au bouton
-      if (buttonConfig.className) {
-        if (buttonConfig.id === 'bold') {
+      if (format.className) {
+        if (format.id === 'bold') {
           button.style.fontWeight = 'bold';
-        } else if (buttonConfig.id === 'italic') {
+        } else if (format.id === 'italic') {
           button.style.fontStyle = 'italic';
-        } else if (buttonConfig.id === 'underline') {
+        } else if (format.id === 'underline') {
           button.style.textDecoration = 'underline';
-        } else if (buttonConfig.id === 'strikethrough') {
+        } else if (format.id === 'strikethrough') {
           button.style.textDecoration = 'line-through';
         }
       }
 
       // Événements hover
       button.addEventListener('mouseenter', () => {
-        button.style.backgroundColor = '#f3f2ef';
-        button.style.color = '#0a66c2';
+        button.style.backgroundColor = toolboxConfig.colors.backgroundHover;
+        button.style.color = toolboxConfig.colors.textHover;
       });
 
       button.addEventListener('mouseleave', () => {
         button.style.backgroundColor = 'transparent';
-        button.style.color = '#666666';
+        button.style.color = toolboxConfig.colors.text;
       });
 
       // Événement clic
@@ -236,9 +195,11 @@ class ToolboxUI {
     const range = selectionData.range;
     const rect = range.getBoundingClientRect();
     
+    const toolboxConfig = CONFIG.ui.toolbox;
+    
     // Position par défaut : au-dessus du texte sélectionné
-    let x = rect.left + (rect.width / 2) - (TOOLBOX_CONFIG.width / 2);
-    let y = rect.top - TOOLBOX_CONFIG.height - TOOLBOX_CONFIG.offsetTop;
+    let x = rect.left + (rect.width / 2) - (toolboxConfig.width / 2);
+    let y = rect.top - toolboxConfig.height - toolboxConfig.offsetTop;
 
     // Ajustements pour les débordements
     const viewport = {
@@ -247,20 +208,20 @@ class ToolboxUI {
     };
 
     // Ajustement horizontal
-    if (x < TOOLBOX_CONFIG.offsetSides) {
-      x = TOOLBOX_CONFIG.offsetSides;
-    } else if (x + TOOLBOX_CONFIG.width > viewport.width - TOOLBOX_CONFIG.offsetSides) {
-      x = viewport.width - TOOLBOX_CONFIG.width - TOOLBOX_CONFIG.offsetSides;
+    if (x < toolboxConfig.offsetSides) {
+      x = toolboxConfig.offsetSides;
+    } else if (x + toolboxConfig.width > viewport.width - toolboxConfig.offsetSides) {
+      x = viewport.width - toolboxConfig.width - toolboxConfig.offsetSides;
     }
 
     // Ajustement vertical - si pas assez de place en haut, mettre en bas
-    if (y < TOOLBOX_CONFIG.offsetTop) {
-      y = rect.bottom + TOOLBOX_CONFIG.offsetBottom;
+    if (y < toolboxConfig.offsetTop) {
+      y = rect.bottom + toolboxConfig.offsetBottom;
     }
 
     // Vérifier que la toolbox reste dans le viewport
-    if (y + TOOLBOX_CONFIG.height > viewport.height - TOOLBOX_CONFIG.offsetBottom) {
-      y = viewport.height - TOOLBOX_CONFIG.height - TOOLBOX_CONFIG.offsetBottom;
+    if (y + toolboxConfig.height > viewport.height - toolboxConfig.offsetBottom) {
+      y = viewport.height - toolboxConfig.height - toolboxConfig.offsetBottom;
     }
 
     return { x, y };
@@ -282,7 +243,7 @@ class ToolboxUI {
     // Fin de l'animation
     setTimeout(() => {
       this.isAnimating = false;
-    }, TOOLBOX_CONFIG.animationDuration);
+    }, CONFIG.ui.toolbox.animationDuration);
   }
 
   /**
@@ -304,7 +265,7 @@ class ToolboxUI {
     setTimeout(() => {
       this.currentSelection = null;
       this.isAnimating = false;
-    }, TOOLBOX_CONFIG.fadeOutDuration);
+    }, CONFIG.ui.toolbox.fadeOutDuration);
   }
 
   /**
@@ -319,10 +280,10 @@ class ToolboxUI {
 
 
     // Ajouter effet visuel de clic
-    button.style.backgroundColor = '#e1e5e9';
+    button.style.backgroundColor = CONFIG.ui.toolbox.colors.backgroundActive;
     setTimeout(() => {
       button.style.backgroundColor = 'transparent';
-    }, 100);
+    }, CONFIG.ui.buttons.clickFeedbackDuration);
 
     // Déclencher le formatage
     this.triggerFormatting(formatType);
@@ -430,7 +391,7 @@ class ToolboxUI {
 }
 
 // Exporter la classe et créer une instance globale
-export { ToolboxUI, TOOLBOX_CONFIG };
+export { ToolboxUI };
 
 // Instance globale pour l'extension
 export const toolboxUI = new ToolboxUI();

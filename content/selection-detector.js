@@ -1,72 +1,7 @@
 // LinkedIn Formateur Toolbox - Selection Detector
 // Détection intelligente de la sélection de texte dans les champs LinkedIn
 
-/**
- * Sélecteurs pour identifier les champs de saisie LinkedIn
- * Ces sélecteurs sont basés sur l'analyse de la structure DOM de LinkedIn
- */
-const LINKEDIN_INPUT_SELECTORS = [
-  // Champs de création de posts
-  '[data-placeholder*="partager"]',
-  '[data-placeholder*="What\'s"]',
-  '[data-placeholder*="share"]',
-  '.ql-editor[contenteditable="true"]', // Editeur principal
-  '[role="textbox"]',
-  
-  // Champs de commentaires
-  '[data-placeholder*="comment"]',
-  '[data-placeholder*="Add a comment"]',
-  '[data-placeholder*="commentaire"]',
-  '.comments-comment-box__form textarea',
-  '.comments-comment-texteditor',
-  
-  // Messages privés
-  '[data-placeholder*="message"]',
-  '[data-placeholder*="Write a message"]',
-  '[data-placeholder*="Rédigez"]',
-  '.msg-form__contenteditable',
-  '.msg-form__compose',
-  
-  // Champs de profil et autres
-  '[data-placeholder*="headline"]',
-  '[data-placeholder*="summary"]',
-  '[data-placeholder*="experience"]',
-  'textarea[name*="summary"]',
-  'textarea[name*="description"]',
-  
-  // Sélecteurs génériques pour LinkedIn
-  'div[contenteditable="true"]',
-  'textarea',
-  'input[type="text"]',
-  '.editor-content',
-  '[data-editor="true"]'
-];
-
-/**
- * Configuration de la détection
- */
-const DETECTION_CONFIG = {
-  // Délai minimum avant de considérer une nouvelle sélection
-  debounceDelay: 100,
-  
-  // Longueur minimale de texte sélectionné
-  minSelectionLength: 1,
-  
-  // Classes LinkedIn à éviter (pour ne pas interférer)
-  excludeClasses: [
-    'lt-extension',
-    'ltf-toolbox',
-    'linkedin-ads',
-    'ad-banner'
-  ],
-  
-  // Attributs indiquant un champ en lecture seule
-  readOnlyAttributes: [
-    'readonly',
-    'disabled',
-    'aria-readonly'
-  ]
-};
+import { CONFIG, log } from '../config/index.js';
 
 /**
  * Classe principale pour la détection de sélection
@@ -93,6 +28,7 @@ class SelectionDetector {
       return;
     }
 
+    log('info', 'Initializing selection detector');
     
     // Événements globaux
     document.addEventListener('selectionchange', this.handleSelectionChange, true);
@@ -103,6 +39,7 @@ class SelectionDetector {
     this.observeNewFields();
     
     this.isInitialized = true;
+    log('info', 'Selection detector initialized successfully');
   }
 
   /**
@@ -132,7 +69,10 @@ class SelectionDetector {
    * Vérifie s'il y a de nouveaux champs LinkedIn dans un élément
    */
   checkForLinkedInFields(element) {
-    LINKEDIN_INPUT_SELECTORS.forEach(selector => {
+    const selectors = CONFIG.detection.linkedinSelectors;
+    log('debug', 'Checking for LinkedIn fields', { selectors: selectors.length });
+    
+    selectors.forEach(selector => {
       try {
         const fields = element.querySelectorAll(selector);
         fields.forEach(field => {
@@ -142,6 +82,7 @@ class SelectionDetector {
         });
       } catch (error) {
         // Sélecteur invalide, on l'ignore
+        log('debug', 'Invalid selector ignored', { selector, error: error.message });
       }
     });
   }
@@ -161,16 +102,20 @@ class SelectionDetector {
    * Vérifie si c'est un champ LinkedIn valide
    */
   isValidLinkedInField(field) {
+    const detectionConfig = CONFIG.detection;
+    
     // Vérifier si c'est en lecture seule
-    for (const attr of DETECTION_CONFIG.readOnlyAttributes) {
+    for (const attr of detectionConfig.readOnlyAttributes) {
       if (field.hasAttribute(attr) && field.getAttribute(attr) !== 'false') {
+        log('debug', 'Field rejected: readonly', { field: field.tagName, attr });
         return false;
       }
     }
 
     // Vérifier les classes à exclure
-    for (const className of DETECTION_CONFIG.excludeClasses) {
+    for (const className of detectionConfig.excludeClasses) {
       if (field.classList.contains(className)) {
+        log('debug', 'Field rejected: excluded class', { field: field.tagName, className });
         return false;
       }
     }
@@ -185,30 +130,32 @@ class SelectionDetector {
   isInLinkedInContext(element) {
     // Vérifier l'URL
     if (!window.location.hostname.includes('linkedin.com')) {
+      log('debug', 'Not on LinkedIn domain');
       return false;
     }
 
     // Vérifier les classes parentes LinkedIn
     let parent = element.parentElement;
     let depth = 0;
-    const maxDepth = 10;
+    const contextConfig = CONFIG.detection.contextValidation;
+    const maxDepth = contextConfig.maxDepth;
 
     while (parent && depth < maxDepth) {
       const classList = parent.classList;
       
       // Classes LinkedIn communes
-      if (classList.contains('feed-shared-update-v2') ||
-          classList.contains('comments-comment-box') ||
-          classList.contains('msg-form') ||
-          classList.contains('artdeco-card') ||
-          classList.contains('feed-shared-text')) {
-        return true;
+      for (const linkedinClass of contextConfig.linkedinClasses) {
+        if (classList.contains(linkedinClass)) {
+          log('debug', 'Found LinkedIn context', { class: linkedinClass, depth });
+          return true;
+        }
       }
 
       parent = parent.parentElement;
       depth++;
     }
 
+    log('debug', 'Default accept on LinkedIn');
     return true; // Par défaut, accepter si on est sur LinkedIn
   }
 
@@ -226,7 +173,7 @@ class SelectionDetector {
     // Délai court pour laisser la sélection se stabiliser
     setTimeout(() => {
       this.processSelection();
-    }, 10);
+    }, CONFIG.detection.stabilizationDelay);
   }
 
   /**
@@ -251,7 +198,7 @@ class SelectionDetector {
 
     this.debounceTimer = setTimeout(() => {
       this.processSelection();
-    }, DETECTION_CONFIG.debounceDelay);
+    }, CONFIG.detection.debounceDelay);
   }
 
   /**
@@ -269,7 +216,8 @@ class SelectionDetector {
     const selectedText = selection.toString().trim();
 
     // Vérifier la longueur minimale
-    if (selectedText.length < DETECTION_CONFIG.minSelectionLength) {
+    if (selectedText.length < CONFIG.detection.minSelectionLength) {
+      log('debug', 'Selection too short', { length: selectedText.length });
       this.clearSelection();
       return;
     }
@@ -308,7 +256,7 @@ class SelectionDetector {
         }
 
         // Vérifier avec les sélecteurs
-        for (const selector of LINKEDIN_INPUT_SELECTORS) {
+        for (const selector of CONFIG.detection.linkedinSelectors) {
           try {
             if (current.matches(selector) && this.isValidLinkedInField(current)) {
               this.monitorField(current); // L'ajouter à la surveillance
@@ -316,6 +264,7 @@ class SelectionDetector {
             }
           } catch (error) {
             // Sélecteur invalide
+            log('debug', 'Invalid selector in findLinkedInField', { selector, error: error.message });
           }
         }
       }
@@ -349,6 +298,10 @@ class SelectionDetector {
     this.currentSelection = selectionData;
     this.currentField = selectionData.field;
 
+    log('info', 'Selection set', { 
+      text: selectionData.text.substring(0, 50) + '...', 
+      fieldType: selectionData.fieldInfo.tagName 
+    });
 
     // Notifier les handlers
     this.notifySelectionHandlers('selection', selectionData);
@@ -359,6 +312,7 @@ class SelectionDetector {
    */
   clearSelection() {
     if (this.currentSelection) {
+      log('info', 'Selection cleared');
       
       // Notifier les handlers
       this.notifySelectionHandlers('deselection', {
@@ -429,11 +383,12 @@ class SelectionDetector {
     this.currentField = null;
     this.isInitialized = false;
 
+    log('info', 'Selection detector destroyed');
   }
 }
 
 // Exporter la classe et créer une instance globale
-export { SelectionDetector, LINKEDIN_INPUT_SELECTORS, DETECTION_CONFIG };
+export { SelectionDetector };
 
 // Instance globale pour l'extension
 export const selectionDetector = new SelectionDetector();
