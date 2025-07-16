@@ -40,9 +40,9 @@ export function chromeExtensionPlugin() {
           default_title: packageJson.displayName || packageJson.name
         },
         icons: {
-          16: "assets/icons/icon16.png",
-          48: "assets/icons/icon48.png",
-          128: "assets/icons/icon128.png"
+          16: "assets/icons/icon.svg",
+          48: "assets/icons/icon.svg",
+          128: "assets/icons/icon.svg"
         }
       };
 
@@ -69,17 +69,13 @@ export function chromeExtensionPlugin() {
       const sourceIconsDir = resolve('assets/icons');
       if (existsSync(sourceIconsDir)) {
         try {
-          copyFileSync(resolve(sourceIconsDir, 'icon16.png'), resolve(iconsDir, 'icon16.png'));
-          copyFileSync(resolve(sourceIconsDir, 'icon48.png'), resolve(iconsDir, 'icon48.png'));
-          copyFileSync(resolve(sourceIconsDir, 'icon128.png'), resolve(iconsDir, 'icon128.png'));
+          copyFileSync(resolve(sourceIconsDir, 'icon.svg'), resolve(iconsDir, 'icon.svg'));
           console.log('✅ Icônes copiées');
         } catch (error) {
           console.log('⚠️ Icônes non trouvées, création de placeholders');
           // Créer des icônes placeholder si elles n'existent pas
-          const placeholderIcon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-          writeFileSync(resolve(iconsDir, 'icon16.png'), placeholderIcon);
-          writeFileSync(resolve(iconsDir, 'icon48.png'), placeholderIcon);
-          writeFileSync(resolve(iconsDir, 'icon128.png'), placeholderIcon);
+          const placeholderIcon = 'data:image/svg+xml;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+          writeFileSync(resolve(iconsDir, 'icon.svg'), placeholderIcon);
         }
       }
 

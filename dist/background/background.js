@@ -1,15 +1,1 @@
-console.log("🚀 LinkedIn Formateur Toolbox - Background Script chargé");
-chrome.runtime.onInstalled.addListener((details) => {
-  if (details.reason === "install") {
-    console.log("✅ Extension installée avec succès");
-  } else if (details.reason === "update") {
-    console.log("🔄 Extension mise à jour");
-  }
-});
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "ping") {
-    sendResponse({ status: "pong" });
-  }
-  return true;
-});
-//# sourceMappingURL=background.js.map
+chrome.runtime.onInstalled.addListener(e=>{"install"===e.reason||e.reason}),chrome.runtime.onMessage.addListener((e,n,s)=>("ping"===e.action&&s({status:"pong"}),!0));

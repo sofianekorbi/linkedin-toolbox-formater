@@ -40,8 +40,14 @@ export default defineConfig({
     },
     // Configuration spécifique pour Chrome Extension
     target: 'esnext',
-    minify: false, // Désactivé pour le debug
-    sourcemap: true
+    minify: process.env.NODE_ENV === 'production' ? 'terser' : false,
+    sourcemap: process.env.NODE_ENV !== 'production',
+    terserOptions: {
+      compress: {
+        drop_console: process.env.NODE_ENV === 'production',
+        drop_debugger: true
+      }
+    }
   },
   resolve: {
     alias: {
