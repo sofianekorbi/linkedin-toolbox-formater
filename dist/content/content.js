@@ -94,10 +94,14 @@ const CONFIG = {
   // ===============================
   detection: {
     // Délais et timing
-    debounceDelay: 100,
-    stabilizationDelay: 10,
+    debounceDelay: 200,
+    // Augmenté pour les sélections longues
+    stabilizationDelay: 50,
+    // Augmenté pour stabiliser les sélections multi-mots
     // Validation de sélection
     minSelectionLength: 1,
+    // Délais spécifiques pour les sélections multi-mots
+    multiWordStabilizationDelay: 100,
     // Classes et attributs à exclure
     excludeClasses: [
       "ltf-extension",
@@ -529,6 +533,7 @@ class SelectionDetector {
     this.currentField = null;
     this.selectionHandlers = new Set();
     this.debounceTimer = null;
+    this.isProcessingMouseUp = false;
     
     // Bind methods
     this.handleSelectionChange = this.handleSelectionChange.bind(this);
@@ -681,6 +686,10 @@ class SelectionDetector {
    * Gestionnaire principal des changements de sélection
    */
   handleSelectionChange(event) {
+    // Ignorer si on traite déjà un mouseup
+    if (this.isProcessingMouseUp) {
+      return;
+    }
     this.debounceSelectionChange();
   }
 
@@ -688,10 +697,15 @@ class SelectionDetector {
    * Gestionnaire mouseup pour détecter les sélections à la souris
    */
   handleMouseUp(event) {
-    // Délai court pour laisser la sélection se stabiliser
+    // Désactiver temporairement selectionchange pour éviter les conflits
+    this.isProcessingMouseUp = true;
+    
+    // Délai adapté selon la longueur de la sélection potentielle
+    const delay = this.getSelectionStabilizationDelay();
     setTimeout(() => {
       this.processSelection();
-    }, CONFIG.detection.stabilizationDelay);
+      this.isProcessingMouseUp = false;
+    }, delay);
   }
 
   /**
@@ -740,21 +754,38 @@ class SelectionDetector {
       return;
     }
 
-    // Vérifier si la sélection est dans un champ LinkedIn
-    const commonAncestor = range.commonAncestorContainer;
-    const field = this.findLinkedInField(commonAncestor);
+    // Vérifier si la sélection est dans un champ LinkedIn (méthode améliorée)
+    const field = this.findLinkedInFieldImproved(range);
 
     if (!field) {
+      log('debug', 'No LinkedIn field found for selection', { 
+        text: selectedText.substring(0, 50),
+        commonAncestor: range.commonAncestorContainer.tagName 
+      });
       this.clearSelection();
       return;
     }
+
+    // Détection des sélections multi-mots pour debugging
+    const wordCount = selectedText.trim().split(/\s+/).length;
+    const isMultiWord = wordCount > 1;
+    
+    log('debug', 'Selection processed successfully', {
+      textLength: selectedText.length,
+      wordCount,
+      isMultiWord,
+      fieldType: field.tagName,
+      fieldId: field.id || 'no-id'
+    });
 
     // Nouvelle sélection valide détectée
     this.setSelection({
       text: selectedText,
       range: range,
       field: field,
-      fieldInfo: this.getFieldInfo(field)
+      fieldInfo: this.getFieldInfo(field),
+      isMultiWord,
+      wordCount
     });
   }
 
@@ -764,7 +795,7 @@ class SelectionDetector {
   findLinkedInField(element) {
     let current = element;
     let depth = 0;
-    const maxDepth = 15;
+    const maxDepth = 20; // Augmenté pour les structures complexes
 
     while (current && depth < maxDepth) {
       if (current.nodeType === Node.ELEMENT_NODE) {
@@ -883,6 +914,80 @@ class SelectionDetector {
   }
 
   /**
+   * Obtient le délai de stabilisation adapté à la sélection
+   */
+  getSelectionStabilizationDelay() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return CONFIG.detection.stabilizationDelay;
+    }
+
+    const selectedText = selection.toString();
+    const wordCount = selectedText.trim().split(/\s+/).length;
+
+    // Utiliser un délai plus long pour les sélections multi-mots
+    if (wordCount > 1) {
+      return CONFIG.detection.multiWordStabilizationDelay;
+    }
+
+    return CONFIG.detection.stabilizationDelay;
+  }
+
+  /**
+   * Améliore la détection des champs LinkedIn pour les sélections multi-éléments
+   */
+  findLinkedInFieldImproved(range) {
+    // Essayer d'abord avec le commonAncestor
+    let field = this.findLinkedInField(range.commonAncestorContainer);
+    if (field) {
+      return field;
+    }
+
+    // Essayer avec le startContainer
+    field = this.findLinkedInField(range.startContainer);
+    if (field) {
+      return field;
+    }
+
+    // Essayer avec le endContainer
+    field = this.findLinkedInField(range.endContainer);
+    if (field) {
+      return field;
+    }
+
+    // Dernier recours : vérifier les éléments dans la sélection
+    return this.findLinkedInFieldInSelection(range);
+  }
+
+  /**
+   * Trouve un champ LinkedIn dans la sélection
+   */
+  findLinkedInFieldInSelection(range) {
+    try {
+      const walker = document.createTreeWalker(
+        range.commonAncestorContainer,
+        NodeFilter.SHOW_ELEMENT,
+        null,
+        false
+      );
+
+      let node;
+      while (node = walker.nextNode()) {
+        if (range.intersectsNode(node)) {
+          const field = this.findLinkedInField(node);
+          if (field) {
+            return field;
+          }
+        }
+      }
+    } catch (error) {
+      log('debug', 'Error in findLinkedInFieldInSelection', error);
+    }
+
+    return null;
+  }
+
+  /**
    * Nettoie et détruit le détecteur
    */
   destroy() {
@@ -900,6 +1005,7 @@ class SelectionDetector {
     this.currentSelection = null;
     this.currentField = null;
     this.isInitialized = false;
+    this.isProcessingMouseUp = false;
 
     log();
   }
@@ -1104,9 +1210,10 @@ class ToolboxUI {
    */
   calculatePosition(selectionData) {
     const range = selectionData.range;
-    const rect = range.getBoundingClientRect();
-    
     const toolboxConfig = CONFIG.ui.toolbox;
+    
+    // Gérer les sélections multi-lignes
+    const rect = this.getOptimalSelectionRect(range);
     
     // Position par défaut : au-dessus du texte sélectionné
     let x = rect.left + (rect.width / 2) - (toolboxConfig.width / 2);
@@ -1255,8 +1362,59 @@ class ToolboxUI {
       return;
     }
 
-    // Fermer la toolbox
-    this.hide();
+    // Délai court pour éviter les fermetures pendant la sélection
+    setTimeout(() => {
+      // Vérifier si une sélection est encore active
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim().length > 0) {
+        // Ne pas fermer si une sélection est active
+        return;
+      }
+      
+      // Fermer la toolbox
+      this.hide();
+    }, 50);
+  }
+
+  /**
+   * Obtient le rectangle optimal pour la sélection (gérant les multi-lignes)
+   */
+  getOptimalSelectionRect(range) {
+    try {
+      // Obtenir tous les rectangles de la sélection
+      const rects = range.getClientRects();
+      
+      if (rects.length === 0) {
+        return range.getBoundingClientRect();
+      }
+      
+      if (rects.length === 1) {
+        return rects[0];
+      }
+      
+      // Pour les sélections multi-lignes, utiliser le premier rectangle
+      // mais ajuster la largeur pour centrer la toolbar
+      const firstRect = rects[0];
+      const lastRect = rects[rects.length - 1];
+      
+      // Calculer la largeur moyenne pour un meilleur centrage
+      const totalWidth = Array.from(rects).reduce((sum, rect) => sum + rect.width, 0);
+      const averageWidth = totalWidth / rects.length;
+      
+      return {
+        left: firstRect.left,
+        right: firstRect.left + averageWidth,
+        top: firstRect.top,
+        bottom: firstRect.bottom,
+        width: averageWidth,
+        height: firstRect.height,
+        x: firstRect.x,
+        y: firstRect.y
+      };
+    } catch (error) {
+      log('debug', 'Error in getOptimalSelectionRect, falling back to getBoundingClientRect', error);
+      return range.getBoundingClientRect();
+    }
   }
 
   /**

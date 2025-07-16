@@ -113,12 +113,16 @@ export const CONFIG = {
   // ===============================
   detection: {
     // Délais et timing
-    debounceDelay: 100,
-    stabilizationDelay: 10,
+    debounceDelay: 200, // Augmenté pour les sélections longues
+    stabilizationDelay: 50, // Augmenté pour stabiliser les sélections multi-mots
     
     // Validation de sélection
     minSelectionLength: 1,
     maxSelectionLength: 10000,
+    
+    // Délais spécifiques pour les sélections multi-mots
+    multiWordStabilizationDelay: 100,
+    selectionProcessingDelay: 25,
     
     // Classes et attributs à exclure
     excludeClasses: [

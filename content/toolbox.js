@@ -196,9 +196,10 @@ class ToolboxUI {
    */
   calculatePosition(selectionData) {
     const range = selectionData.range;
-    const rect = range.getBoundingClientRect();
-    
     const toolboxConfig = CONFIG.ui.toolbox;
+    
+    // Gérer les sélections multi-lignes
+    const rect = this.getOptimalSelectionRect(range);
     
     // Position par défaut : au-dessus du texte sélectionné
     let x = rect.left + (rect.width / 2) - (toolboxConfig.width / 2);
@@ -347,8 +348,59 @@ class ToolboxUI {
       return;
     }
 
-    // Fermer la toolbox
-    this.hide();
+    // Délai court pour éviter les fermetures pendant la sélection
+    setTimeout(() => {
+      // Vérifier si une sélection est encore active
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim().length > 0) {
+        // Ne pas fermer si une sélection est active
+        return;
+      }
+      
+      // Fermer la toolbox
+      this.hide();
+    }, 50);
+  }
+
+  /**
+   * Obtient le rectangle optimal pour la sélection (gérant les multi-lignes)
+   */
+  getOptimalSelectionRect(range) {
+    try {
+      // Obtenir tous les rectangles de la sélection
+      const rects = range.getClientRects();
+      
+      if (rects.length === 0) {
+        return range.getBoundingClientRect();
+      }
+      
+      if (rects.length === 1) {
+        return rects[0];
+      }
+      
+      // Pour les sélections multi-lignes, utiliser le premier rectangle
+      // mais ajuster la largeur pour centrer la toolbar
+      const firstRect = rects[0];
+      const lastRect = rects[rects.length - 1];
+      
+      // Calculer la largeur moyenne pour un meilleur centrage
+      const totalWidth = Array.from(rects).reduce((sum, rect) => sum + rect.width, 0);
+      const averageWidth = totalWidth / rects.length;
+      
+      return {
+        left: firstRect.left,
+        right: firstRect.left + averageWidth,
+        top: firstRect.top,
+        bottom: firstRect.bottom,
+        width: averageWidth,
+        height: firstRect.height,
+        x: firstRect.x,
+        y: firstRect.y
+      };
+    } catch (error) {
+      log('debug', 'Error in getOptimalSelectionRect, falling back to getBoundingClientRect', error);
+      return range.getBoundingClientRect();
+    }
   }
 
   /**
