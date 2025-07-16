@@ -43,11 +43,13 @@ const CONFIG = {
   ui: {
     // Configuration de la toolbox flottante
     toolbox: {
-      // Dimensions
-      width: 160,
+      // Dimensions (calculées pour un centrage parfait)
+      width: 152,
+      // 4×32 + 2×6 + 3×6 = 128 + 12 + 18 = 158px réduit à 152 pour plus de compacité
       height: 40,
       buttonSize: 32,
-      buttonSpacing: 4,
+      buttonSpacing: 6,
+      // Augmenté pour meilleure symétrie
       // Positionnement
       offsetTop: 10,
       offsetBottom: 10,
@@ -1100,7 +1102,7 @@ class ToolboxUI {
       box-shadow: ${toolboxConfig.styles.boxShadow};
       display: flex;
       align-items: center;
-      gap: ${toolboxConfig.buttonSpacing}px;
+      justify-content: space-between;
       padding: ${toolboxConfig.buttonSpacing}px;
       opacity: 0;
       pointer-events: none;
@@ -1215,8 +1217,9 @@ class ToolboxUI {
     // Gérer les sélections multi-lignes
     const rect = this.getOptimalSelectionRect(range);
     
-    // Position par défaut : au-dessus du texte sélectionné
-    let x = rect.left + (rect.width / 2) - (toolboxConfig.width / 2);
+    // Position par défaut : au-dessus du texte sélectionné, parfaitement centré
+    const centerX = rect.left + (rect.width / 2);
+    let x = centerX - (toolboxConfig.width / 2);
     let y = rect.top - toolboxConfig.height - toolboxConfig.offsetTop;
 
     // Ajustements pour les débordements
@@ -1225,11 +1228,14 @@ class ToolboxUI {
       height: window.innerHeight
     };
 
-    // Ajustement horizontal
-    if (x < toolboxConfig.offsetSides) {
-      x = toolboxConfig.offsetSides;
-    } else if (x + toolboxConfig.width > viewport.width - toolboxConfig.offsetSides) {
-      x = viewport.width - toolboxConfig.width - toolboxConfig.offsetSides;
+    // Ajustement horizontal avec marges symétriques
+    const leftBoundary = toolboxConfig.offsetSides;
+    const rightBoundary = viewport.width - toolboxConfig.width - toolboxConfig.offsetSides;
+    
+    if (x < leftBoundary) {
+      x = leftBoundary;
+    } else if (x > rightBoundary) {
+      x = rightBoundary;
     }
 
     // Ajustement vertical - si pas assez de place en haut, mettre en bas
@@ -1392,23 +1398,26 @@ class ToolboxUI {
         return rects[0];
       }
       
-      // Pour les sélections multi-lignes, utiliser le premier rectangle
-      // mais ajuster la largeur pour centrer la toolbar
+      // Pour les sélections multi-lignes, utiliser un centrage plus précis
       const firstRect = rects[0];
       const lastRect = rects[rects.length - 1];
       
-      // Calculer la largeur moyenne pour un meilleur centrage
-      const totalWidth = Array.from(rects).reduce((sum, rect) => sum + rect.width, 0);
-      const averageWidth = totalWidth / rects.length;
+      // Calculer la largeur totale de la sélection (de début à fin)
+      const selectionStart = Math.min(firstRect.left, lastRect.left);
+      const selectionEnd = Math.max(firstRect.right, lastRect.right);
+      const totalSelectionWidth = selectionEnd - selectionStart;
+      
+      // Utiliser le centre de la sélection complète
+      const centerX = selectionStart + (totalSelectionWidth / 2);
       
       return {
-        left: firstRect.left,
-        right: firstRect.left + averageWidth,
+        left: centerX - (totalSelectionWidth / 2),
+        right: centerX + (totalSelectionWidth / 2),
         top: firstRect.top,
         bottom: firstRect.bottom,
-        width: averageWidth,
+        width: totalSelectionWidth,
         height: firstRect.height,
-        x: firstRect.x,
+        x: centerX - (totalSelectionWidth / 2),
         y: firstRect.y
       };
     } catch (error) {

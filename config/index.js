@@ -53,11 +53,11 @@ export const CONFIG = {
   ui: {
     // Configuration de la toolbox flottante
     toolbox: {
-      // Dimensions
-      width: 160,
+      // Dimensions (calculées pour un centrage parfait)
+      width: 152, // 4×32 + 2×6 + 3×6 = 128 + 12 + 18 = 158px réduit à 152 pour plus de compacité
       height: 40,
       buttonSize: 32,
-      buttonSpacing: 4,
+      buttonSpacing: 6, // Augmenté pour meilleure symétrie
       
       // Positionnement
       offsetTop: 10,
