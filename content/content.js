@@ -6,6 +6,7 @@ import { selectionDetector } from './selection-detector.js';
 import { toolboxUI } from './toolbox.js';
 import { formatHandler } from './format-handler.js';
 import { detectFormatting } from './unicode-formatters.js';
+import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from '../utils/error-handler.js';
 
 
 /**
@@ -28,13 +29,17 @@ class LinkedInFormatterToolbox {
       return;
     }
 
-    try {
+    return errorHandler.safeExecute(async () => {
       log('info', 'Initializing LinkedIn Formatter Toolbox');
       
       // Vérifier qu'on est bien sur LinkedIn
       if (!this.isLinkedInPage()) {
-        log('warn', 'Not on LinkedIn page, skipping initialization');
-        return;
+        throw new ExtensionError(
+          'Not on LinkedIn page, skipping initialization',
+          ErrorTypes.INITIALIZATION,
+          ErrorSeverity.LOW,
+          { hostname: window.location.hostname }
+        );
       }
 
       // Initialiser le détecteur de sélection
@@ -49,9 +54,7 @@ class LinkedInFormatterToolbox {
       this.isInitialized = true;
       log('info', 'LinkedIn Formatter Toolbox initialized successfully');
 
-    } catch (error) {
-      log('error', 'Failed to initialize extension', error);
-    }
+    }, ErrorTypes.INITIALIZATION, { hostname: window.location.hostname });
   }
 
   /**
@@ -142,8 +145,19 @@ class LinkedInFormatterToolbox {
   /**
    * Applique le formatage au texte sélectionné
    */
-  applyFormatting(selectionData, formatType) {
-    return formatHandler.applyFormatting(selectionData, formatType);
+  async applyFormatting(selectionData, formatType) {
+    return errorHandler.safeExecute(async () => {
+      if (!selectionData || !formatType) {
+        throw new ExtensionError(
+          'Invalid parameters for applyFormatting',
+          ErrorTypes.FORMATTING,
+          ErrorSeverity.MEDIUM,
+          { hasSelectionData: !!selectionData, formatType }
+        );
+      }
+
+      return await formatHandler.applyFormatting(selectionData, formatType);
+    }, ErrorTypes.FORMATTING, { formatType });
   }
 
   /**

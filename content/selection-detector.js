@@ -2,6 +2,7 @@
 // Détection intelligente de la sélection de texte dans les champs LinkedIn
 
 import { CONFIG, log } from '../config/index.js';
+import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from '../utils/error-handler.js';
 
 /**
  * Classe principale pour la détection de sélection
@@ -28,18 +29,20 @@ class SelectionDetector {
       return;
     }
 
-    log('info', 'Initializing selection detector');
-    
-    // Événements globaux
-    document.addEventListener('selectionchange', this.handleSelectionChange, true);
-    document.addEventListener('mouseup', this.handleMouseUp, true);
-    document.addEventListener('keyup', this.handleKeyUp, true);
-    
-    // Observer pour les nouveaux champs (LinkedIn SPA)
-    this.observeNewFields();
-    
-    this.isInitialized = true;
-    log('info', 'Selection detector initialized successfully');
+    return errorHandler.safeExecute(() => {
+      log('info', 'Initializing selection detector');
+      
+      // Événements globaux
+      document.addEventListener('selectionchange', this.handleSelectionChange, true);
+      document.addEventListener('mouseup', this.handleMouseUp, true);
+      document.addEventListener('keyup', this.handleKeyUp, true);
+      
+      // Observer pour les nouveaux champs (LinkedIn SPA)
+      this.observeNewFields();
+      
+      this.isInitialized = true;
+      log('info', 'Selection detector initialized successfully');
+    }, ErrorTypes.INITIALIZATION, { component: 'selection-detector' });
   }
 
   /**

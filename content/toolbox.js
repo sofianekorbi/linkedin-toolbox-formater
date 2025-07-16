@@ -2,6 +2,7 @@
 // Interface utilisateur de la toolbox flottante
 
 import { CONFIG, getConfig, log } from '../config/index.js';
+import { errorHandler, ExtensionError, ErrorTypes, ErrorSeverity } from '../utils/error-handler.js';
 
 /**
  * Classe principale pour la toolbox flottante
@@ -27,16 +28,18 @@ class ToolboxUI {
    * Initialise la toolbox
    */
   init() {
-    log('info', 'Initializing toolbox UI');
-    
-    // Créer l'élément toolbox
-    this.createToolboxElement();
-    
-    // Ajouter les événements globaux
-    document.addEventListener('click', this.handleDocumentClick, true);
-    document.addEventListener('keydown', this.handleKeyDown, true);
-    
-    log('info', 'Toolbox UI initialized successfully');
+    return errorHandler.safeExecute(() => {
+      log('info', 'Initializing toolbox UI');
+      
+      // Créer l'élément toolbox
+      this.createToolboxElement();
+      
+      // Ajouter les événements globaux
+      document.addEventListener('click', this.handleDocumentClick, true);
+      document.addEventListener('keydown', this.handleKeyDown, true);
+      
+      log('info', 'Toolbox UI initialized successfully');
+    }, ErrorTypes.INITIALIZATION, { component: 'toolbox' });
   }
 
   /**
@@ -272,24 +275,34 @@ class ToolboxUI {
    * Gère les clics sur les boutons
    */
   handleButtonClick(event) {
-    event.preventDefault();
-    event.stopPropagation();
+    return errorHandler.safeExecute(() => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    const button = event.currentTarget;
-    const formatType = button.getAttribute('data-format');
+      const button = event.currentTarget;
+      const formatType = button.getAttribute('data-format');
 
+      if (!formatType) {
+        throw new ExtensionError(
+          'No format type found on button',
+          ErrorTypes.UI_INTERACTION,
+          ErrorSeverity.MEDIUM,
+          { buttonId: button.id }
+        );
+      }
 
-    // Ajouter effet visuel de clic
-    button.style.backgroundColor = CONFIG.ui.toolbox.colors.backgroundActive;
-    setTimeout(() => {
-      button.style.backgroundColor = 'transparent';
-    }, CONFIG.ui.buttons.clickFeedbackDuration);
+      // Ajouter effet visuel de clic
+      button.style.backgroundColor = CONFIG.ui.toolbox.colors.backgroundActive;
+      setTimeout(() => {
+        button.style.backgroundColor = 'transparent';
+      }, CONFIG.ui.buttons.clickFeedbackDuration);
 
-    // Déclencher le formatage
-    this.triggerFormatting(formatType);
+      // Déclencher le formatage
+      this.triggerFormatting(formatType);
 
-    // Masquer la toolbox
-    this.hide();
+      // Masquer la toolbox
+      this.hide();
+    }, ErrorTypes.UI_INTERACTION, { formatType: event.currentTarget?.getAttribute('data-format') });
   }
 
   /**

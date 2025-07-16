@@ -84,6 +84,12 @@ const CONFIG = {
     }
   },
   // ===============================
+  // ÉVÉNEMENTS
+  // ===============================
+  events: {
+    linkedinNotification: ["input", "change", "keyup"]
+  },
+  // ===============================
   // DÉTECTION DE SÉLECTION
   // ===============================
   detection: {
@@ -168,7 +174,9 @@ const CONFIG = {
     allowedDomains: [
       "linkedin.com",
       "*.linkedin.com"
-    ]},
+    ],
+    // Validation des entrées
+    maxInputLength: 5e4},
   // ===============================
   // MÉTADONNÉES
   // ===============================
@@ -187,6 +195,325 @@ function isDomainAllowed(domain) {
 function log(level, message, ...args) {
   return;
 }
+
+// LinkedIn Formateur Toolbox - Error Handler
+// Système de gestion d'erreurs centralisé et robuste
+
+
+/**
+ * Types d'erreurs de l'extension
+ */
+const ErrorTypes = {
+  INITIALIZATION: 'initialization',
+  FORMATTING: 'formatting',
+  TEXT_REPLACEMENT: 'text_replacement',
+  UI_INTERACTION: 'ui_interaction',
+  NETWORK: 'network',
+  UNKNOWN: 'unknown'
+};
+
+/**
+ * Severité des erreurs
+ */
+const ErrorSeverity = {
+  LOW: 'low',         // Erreur mineure, n'affecte pas le fonctionnement
+  MEDIUM: 'medium',   // Erreur modérée, certaines fonctionnalités peuvent échouer
+  HIGH: 'high',       // Erreur critique, l'extension ne peut pas fonctionner
+  CRITICAL: 'critical' // Erreur fatale, nécessite une intervention immédiate
+};
+
+/**
+ * Classe pour représenter une erreur de l'extension
+ */
+class ExtensionError extends Error {
+  constructor(message, type = ErrorTypes.UNKNOWN, severity = ErrorSeverity.MEDIUM, context = {}) {
+    super(message);
+    this.name = 'ExtensionError';
+    this.type = type;
+    this.severity = severity;
+    this.context = context;
+    this.timestamp = new Date().toISOString();
+    this.userAgent = navigator.userAgent;
+    this.url = window.location.href;
+    
+    // Capturer la stack trace si disponible
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ExtensionError);
+    }
+  }
+
+  /**
+   * Sérialise l'erreur pour le logging
+   */
+  serialize() {
+    return {
+      message: this.message,
+      type: this.type,
+      severity: this.severity,
+      context: this.context,
+      timestamp: this.timestamp,
+      userAgent: this.userAgent,
+      url: this.url,
+      stack: this.stack
+    };
+  }
+}
+
+/**
+ * Gestionnaire d'erreurs centralisé
+ */
+class ErrorHandler {
+  constructor() {
+    this.errorCount = new Map();
+    this.errorHistory = [];
+    this.maxHistorySize = 100;
+    this.suppressedErrors = new Set();
+    
+    // Écouter les erreurs globales
+    this.setupGlobalErrorHandling();
+  }
+
+  /**
+   * Configure la gestion d'erreurs globale
+   */
+  setupGlobalErrorHandling() {
+    // Erreurs JavaScript non capturées
+    window.addEventListener('error', (event) => {
+      this.handleError(new ExtensionError(
+        event.message,
+        ErrorTypes.UNKNOWN,
+        ErrorSeverity.MEDIUM,
+        {
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+          error: event.error
+        }
+      ));
+    });
+
+    // Promesses rejetées non capturées
+    window.addEventListener('unhandledrejection', (event) => {
+      this.handleError(new ExtensionError(
+        `Unhandled promise rejection: ${event.reason}`,
+        ErrorTypes.UNKNOWN,
+        ErrorSeverity.MEDIUM,
+        { reason: event.reason }
+      ));
+    });
+  }
+
+  /**
+   * Gère une erreur de manière centralisée
+   */
+  handleError(error, shouldThrow = false) {
+    // Convertir en ExtensionError si nécessaire
+    if (!(error instanceof ExtensionError)) {
+      error = new ExtensionError(
+        error.message || 'Unknown error',
+        ErrorTypes.UNKNOWN,
+        ErrorSeverity.MEDIUM,
+        { originalError: error }
+      );
+    }
+
+    // Vérifier si l'erreur est supprimée
+    if (this.isErrorSuppressed(error)) {
+      return;
+    }
+
+    // Compter les occurrences
+    const errorKey = `${error.type}_${error.message}`;
+    this.errorCount.set(errorKey, (this.errorCount.get(errorKey) || 0) + 1);
+
+    // Ajouter à l'historique
+    this.addToHistory(error);
+
+    // Logger l'erreur
+    this.logError(error);
+
+    // Actions selon la severité
+    this.handleBySeverity(error);
+
+    // Lancer l'erreur si demandé
+    if (shouldThrow) {
+      throw error;
+    }
+  }
+
+  /**
+   * Vérifie si une erreur doit être supprimée
+   */
+  isErrorSuppressed(error) {
+    return this.suppressedErrors.has(error.type) || 
+           this.suppressedErrors.has(`${error.type}_${error.message}`);
+  }
+
+  /**
+   * Ajoute une erreur à l'historique
+   */
+  addToHistory(error) {
+    this.errorHistory.push(error.serialize());
+    
+    // Limiter la taille de l'historique
+    if (this.errorHistory.length > this.maxHistorySize) {
+      this.errorHistory.shift();
+    }
+  }
+
+  /**
+   * Log l'erreur avec le bon niveau
+   */
+  logError(error) {
+    const logLevel = this.getLogLevel(error.severity);
+    log(logLevel, `[${error.type}] ${error.message}`, error.context);
+  }
+
+  /**
+   * Obtient le niveau de log selon la severité
+   */
+  getLogLevel(severity) {
+    switch (severity) {
+      case ErrorSeverity.LOW: return 'debug';
+      case ErrorSeverity.MEDIUM: return 'warn';
+      case ErrorSeverity.HIGH: return 'error';
+      case ErrorSeverity.CRITICAL: return 'error';
+      default: return 'warn';
+    }
+  }
+
+  /**
+   * Gère l'erreur selon sa severité
+   */
+  handleBySeverity(error) {
+    switch (error.severity) {
+      case ErrorSeverity.LOW:
+        // Erreur mineure, continuer normalement
+        break;
+        
+      case ErrorSeverity.MEDIUM:
+        // Erreur modérée, peut nécessiter une action
+        this.handleMediumError(error);
+        break;
+        
+      case ErrorSeverity.HIGH:
+        // Erreur critique, actions de récupération
+        this.handleHighError(error);
+        break;
+        
+      case ErrorSeverity.CRITICAL:
+        // Erreur fatale, arrêter l'extension
+        this.handleCriticalError(error);
+        break;
+    }
+  }
+
+  /**
+   * Gère les erreurs de severité moyenne
+   */
+  handleMediumError(error) {
+    // Retry automatique pour certains types d'erreurs
+    if (error.type === ErrorTypes.NETWORK) ;
+  }
+
+  /**
+   * Gère les erreurs de haute severité
+   */
+  handleHighError(error) {
+    // Notifier l'utilisateur si nécessaire
+    if (error.type === ErrorTypes.FORMATTING) {
+      this.notifyUser('Une erreur de formatage s\'est produite. Veuillez réessayer.', 'warning');
+    }
+  }
+
+  /**
+   * Gère les erreurs critiques
+   */
+  handleCriticalError(error) {
+    // Désactiver l'extension si nécessaire
+    log('error', 'Critical error occurred, extension may need to be disabled', error.serialize());
+    
+    // Notifier l'utilisateur
+    this.notifyUser('Une erreur critique s\'est produite. L\'extension va être désactivée.', 'error');
+  }
+
+  /**
+   * Notifie l'utilisateur (à implémenter selon le besoin)
+   */
+  notifyUser(message, type = 'info') {
+    // Pour l'instant, utiliser console
+    console[type](`[LinkedIn Formateur] ${message}`);
+    
+    // Possibilité d'ajouter une notification UI plus tard
+  }
+
+  /**
+   * Supprime un type d'erreur
+   */
+  suppressError(errorType) {
+    this.suppressedErrors.add(errorType);
+  }
+
+  /**
+   * Réactive un type d'erreur
+   */
+  unsuppressError(errorType) {
+    this.suppressedErrors.delete(errorType);
+  }
+
+  /**
+   * Obtient les statistiques d'erreurs
+   */
+  getErrorStats() {
+    return {
+      totalErrors: this.errorHistory.length,
+      errorCounts: Object.fromEntries(this.errorCount),
+      recentErrors: this.errorHistory.slice(-10),
+      suppressedErrors: Array.from(this.suppressedErrors)
+    };
+  }
+
+  /**
+   * Nettoie l'historique des erreurs
+   */
+  clearErrorHistory() {
+    this.errorHistory = [];
+    this.errorCount.clear();
+  }
+
+  /**
+   * Wrapper pour l'exécution sécurisée d'une fonction
+   */
+  async safeExecute(fn, errorType = ErrorTypes.UNKNOWN, context = {}) {
+    try {
+      return await fn();
+    } catch (error) {
+      this.handleError(new ExtensionError(
+        error.message || 'Safe execution failed',
+        errorType,
+        ErrorSeverity.MEDIUM,
+        { ...context, originalError: error }
+      ));
+      return null;
+    }
+  }
+
+  /**
+   * Crée un wrapper de fonction avec gestion d'erreur automatique
+   */
+  createErrorWrapper(fn, errorType = ErrorTypes.UNKNOWN, context = {}) {
+    return async (...args) => {
+      return this.safeExecute(
+        () => fn(...args),
+        errorType,
+        { ...context, arguments: args }
+      );
+    };
+  }
+}
+
+// Instance globale du gestionnaire d'erreurs
+const errorHandler = new ErrorHandler();
 
 // LinkedIn Formateur Toolbox - Selection Detector
 // Détection intelligente de la sélection de texte dans les champs LinkedIn
@@ -217,18 +544,20 @@ class SelectionDetector {
       return;
     }
 
-    log();
-    
-    // Événements globaux
-    document.addEventListener('selectionchange', this.handleSelectionChange, true);
-    document.addEventListener('mouseup', this.handleMouseUp, true);
-    document.addEventListener('keyup', this.handleKeyUp, true);
-    
-    // Observer pour les nouveaux champs (LinkedIn SPA)
-    this.observeNewFields();
-    
-    this.isInitialized = true;
-    log();
+    return errorHandler.safeExecute(() => {
+      log();
+      
+      // Événements globaux
+      document.addEventListener('selectionchange', this.handleSelectionChange, true);
+      document.addEventListener('mouseup', this.handleMouseUp, true);
+      document.addEventListener('keyup', this.handleKeyUp, true);
+      
+      // Observer pour les nouveaux champs (LinkedIn SPA)
+      this.observeNewFields();
+      
+      this.isInitialized = true;
+      log();
+    }, ErrorTypes.INITIALIZATION, { component: 'selection-detector' });
   }
 
   /**
@@ -607,16 +936,18 @@ class ToolboxUI {
    * Initialise la toolbox
    */
   init() {
-    log();
-    
-    // Créer l'élément toolbox
-    this.createToolboxElement();
-    
-    // Ajouter les événements globaux
-    document.addEventListener('click', this.handleDocumentClick, true);
-    document.addEventListener('keydown', this.handleKeyDown, true);
-    
-    log();
+    return errorHandler.safeExecute(() => {
+      log();
+      
+      // Créer l'élément toolbox
+      this.createToolboxElement();
+      
+      // Ajouter les événements globaux
+      document.addEventListener('click', this.handleDocumentClick, true);
+      document.addEventListener('keydown', this.handleKeyDown, true);
+      
+      log();
+    }, ErrorTypes.INITIALIZATION, { component: 'toolbox' });
   }
 
   /**
@@ -852,24 +1183,34 @@ class ToolboxUI {
    * Gère les clics sur les boutons
    */
   handleButtonClick(event) {
-    event.preventDefault();
-    event.stopPropagation();
+    return errorHandler.safeExecute(() => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    const button = event.currentTarget;
-    const formatType = button.getAttribute('data-format');
+      const button = event.currentTarget;
+      const formatType = button.getAttribute('data-format');
 
+      if (!formatType) {
+        throw new ExtensionError(
+          'No format type found on button',
+          ErrorTypes.UI_INTERACTION,
+          ErrorSeverity.MEDIUM,
+          { buttonId: button.id }
+        );
+      }
 
-    // Ajouter effet visuel de clic
-    button.style.backgroundColor = CONFIG.ui.toolbox.colors.backgroundActive;
-    setTimeout(() => {
-      button.style.backgroundColor = 'transparent';
-    }, CONFIG.ui.buttons.clickFeedbackDuration);
+      // Ajouter effet visuel de clic
+      button.style.backgroundColor = CONFIG.ui.toolbox.colors.backgroundActive;
+      setTimeout(() => {
+        button.style.backgroundColor = 'transparent';
+      }, CONFIG.ui.buttons.clickFeedbackDuration);
 
-    // Déclencher le formatage
-    this.triggerFormatting(formatType);
+      // Déclencher le formatage
+      this.triggerFormatting(formatType);
 
-    // Masquer la toolbox
-    this.hide();
+      // Masquer la toolbox
+      this.hide();
+    }, ErrorTypes.UI_INTERACTION, { formatType: event.currentTarget?.getAttribute('data-format') });
   }
 
   /**
@@ -1395,6 +1736,941 @@ function applySimpleFormatting(text, formatType) {
   return formatMap[formatType] ? formatMap[formatType](text) : text;
 }
 
+// LinkedIn Formateur Toolbox - Text Formatter
+// Classe spécialisée pour la logique de formatage pure
+
+
+/**
+ * Classe pour la logique de formatage pure
+ * Responsabilité: Transformer du texte selon les règles de formatage
+ */
+class TextFormatter {
+  constructor() {
+    this.supportedFormats = CONFIG.formats.supported;
+    this.formatFunctions = this.initializeFormatFunctions();
+  }
+
+  /**
+   * Initialise les fonctions de formatage
+   */
+  initializeFormatFunctions() {
+    return {
+      bold: toBold,
+      italic: toItalic,
+      underline: toUnderline,
+      strikethrough: toStrikethrough,
+      normal: toNormal
+    };
+  }
+
+  /**
+   * Applique un formatage à un texte
+   * @param {string} text - Le texte à formater
+   * @param {string} formatType - Le type de formatage
+   * @param {Array} existingFormats - Les formatages déjà présents
+   * @returns {Promise<string>} - Le texte formaté
+   */
+  async formatText(text, formatType, existingFormats = []) {
+    return errorHandler.safeExecute(async () => {
+      this.validateFormatRequest(text, formatType);
+
+      // Utiliser la logique incrémentale pour tous les cas
+      const formattedText = applyIncrementalFormatting(text, existingFormats, formatType);
+
+      this.validateFormattedText(formattedText, text, formatType);
+
+      return formattedText;
+    }, ErrorTypes.FORMATTING, { formatType, textLength: text?.length });
+  }
+
+  /**
+   * Détecte les formatages existants dans un texte
+   * @param {string} text - Le texte à analyser
+   * @returns {Array} - Les formatages détectés
+   */
+  detectFormats(text) {
+    return errorHandler.safeExecute(() => {
+      if (!text || typeof text !== 'string') {
+        return [];
+      }
+
+      return detectFormatting(text);
+    }, ErrorTypes.FORMATTING, { textLength: text?.length }) || [];
+  }
+
+  /**
+   * Valide une demande de formatage
+   * @param {string} text - Le texte à valider
+   * @param {string} formatType - Le type de formatage
+   */
+  validateFormatRequest(text, formatType) {
+    if (!text || typeof text !== 'string') {
+      throw new ExtensionError(
+        'Invalid text provided for formatting',
+        ErrorTypes.FORMATTING,
+        ErrorSeverity.MEDIUM,
+        { textType: typeof text, formatType }
+      );
+    }
+
+    if (!formatType || !this.supportedFormats.includes(formatType)) {
+      throw new ExtensionError(
+        'Unsupported format type',
+        ErrorTypes.FORMATTING,
+        ErrorSeverity.MEDIUM,
+        { formatType, supportedFormats: this.supportedFormats }
+      );
+    }
+
+    if (text.length > CONFIG.security.maxInputLength) {
+      throw new ExtensionError(
+        'Text too long for formatting',
+        ErrorTypes.FORMATTING,
+        ErrorSeverity.MEDIUM,
+        { textLength: text.length, maxLength: CONFIG.security.maxInputLength }
+      );
+    }
+  }
+
+  /**
+   * Valide le texte formaté
+   * @param {string} formattedText - Le texte formaté
+   * @param {string} originalText - Le texte original
+   * @param {string} formatType - Le type de formatage
+   */
+  validateFormattedText(formattedText, originalText, formatType) {
+    if (!formattedText || typeof formattedText !== 'string') {
+      throw new ExtensionError(
+        'Formatting failed to produce valid text',
+        ErrorTypes.FORMATTING,
+        ErrorSeverity.HIGH,
+        { formatType, originalLength: originalText.length }
+      );
+    }
+
+    // Vérifier que le texte formaté n'est pas vide si l'original ne l'était pas
+    if (originalText.trim() && !formattedText.trim()) {
+      throw new ExtensionError(
+        'Formatting resulted in empty text',
+        ErrorTypes.FORMATTING,
+        ErrorSeverity.HIGH,
+        { formatType, originalText: originalText.substring(0, 50) }
+      );
+    }
+  }
+
+  /**
+   * Applique un formatage simple (fonction directe)
+   * @param {string} text - Le texte à formater
+   * @param {string} formatType - Le type de formatage
+   * @returns {Promise<string>} - Le texte formaté
+   */
+  async applySimpleFormat(text, formatType) {
+    return errorHandler.safeExecute(async () => {
+      this.validateFormatRequest(text, formatType);
+
+      const formatFunction = this.formatFunctions[formatType];
+      if (!formatFunction) {
+        throw new ExtensionError(
+          'Format function not found',
+          ErrorTypes.FORMATTING,
+          ErrorSeverity.MEDIUM,
+          { formatType, availableFunctions: Object.keys(this.formatFunctions) }
+        );
+      }
+
+      const formattedText = formatFunction(text);
+      this.validateFormattedText(formattedText, text, formatType);
+
+      return formattedText;
+    }, ErrorTypes.FORMATTING, { formatType, textLength: text?.length });
+  }
+
+  /**
+   * Supprime tous les formatages d'un texte
+   * @param {string} text - Le texte à nettoyer
+   * @returns {Promise<string>} - Le texte sans formatage
+   */
+  async removeAllFormats(text) {
+    return errorHandler.safeExecute(async () => {
+      if (!text || typeof text !== 'string') {
+        return text;
+      }
+
+      return toNormal(text);
+    }, ErrorTypes.FORMATTING, { operation: 'removeAllFormats', textLength: text?.length });
+  }
+
+  /**
+   * Vérifie si un texte contient des formatages
+   * @param {string} text - Le texte à vérifier
+   * @returns {boolean} - True si le texte contient des formatages
+   */
+  hasFormats(text) {
+    return errorHandler.safeExecute(() => {
+      if (!text || typeof text !== 'string') {
+        return false;
+      }
+
+      const formats = this.detectFormats(text);
+      return formats.length > 0;
+    }, ErrorTypes.FORMATTING, { operation: 'hasFormats', textLength: text?.length }) || false;
+  }
+
+  /**
+   * Obtient les types de formatage supportés
+   * @returns {Array} - Liste des types supportés
+   */
+  getSupportedFormats() {
+    return [...this.supportedFormats];
+  }
+
+  /**
+   * Obtient les informations sur un type de formatage
+   * @param {string} formatType - Le type de formatage
+   * @returns {Object} - Informations sur le formatage
+   */
+  getFormatInfo(formatType) {
+    return CONFIG.formats.definitions[formatType] || null;
+  }
+
+  /**
+   * Prévisualise un formatage sans l'appliquer
+   * @param {string} text - Le texte à prévisualiser
+   * @param {string} formatType - Le type de formatage
+   * @returns {Promise<Object>} - Informations de prévisualisation
+   */
+  async previewFormat(text, formatType) {
+    return errorHandler.safeExecute(async () => {
+      this.validateFormatRequest(text, formatType);
+
+      const existingFormats = this.detectFormats(text);
+      const formattedText = await this.formatText(text, formatType, existingFormats);
+
+      return {
+        original: text,
+        formatted: formattedText,
+        formatType,
+        existingFormats,
+        hasChanges: text !== formattedText
+      };
+    }, ErrorTypes.FORMATTING, { operation: 'preview', formatType, textLength: text?.length });
+  }
+}
+
+// Instance globale
+const textFormatter = new TextFormatter();
+
+// LinkedIn Formateur Toolbox - Format Orchestrator
+// Classe d'orchestration pour coordonner le formatage
+
+
+/**
+ * Classe d'orchestration pour le formatage
+ * Responsabilité: Coordonner les différents composants pour le formatage
+ */
+class FormatOrchestrator {
+  constructor() {
+    this.activeOperations = new Map();
+    this.operationCounter = 0;
+    this.statistics = {
+      totalOperations: 0,
+      successfulOperations: 0,
+      failedOperations: 0,
+      averageProcessingTime: 0
+    };
+  }
+
+  /**
+   * Orchestre une opération de formatage complète
+   * @param {Object} request - Requête de formatage
+   * @returns {Promise<Object>} - Résultat de l'opération
+   */
+  async orchestrateFormatting(request) {
+    const operationId = this.generateOperationId();
+    const startTime = Date.now();
+
+    return errorHandler.safeExecute(async () => {
+      // Valider la requête
+      this.validateFormatRequest(request);
+
+      // Enregistrer l'opération
+      this.registerOperation(operationId, request);
+
+      log('info', 'Starting format orchestration', {
+        operationId,
+        formatType: request.formatType,
+        textLength: request.selectionData.text.length
+      });
+
+      // Étape 1: Analyser la sélection
+      const analysisResult = await this.analyzeSelection(request.selectionData);
+
+      // Étape 2: Préparer le formatage
+      const formatPreparation = await this.prepareFormatting(
+        request.selectionData,
+        request.formatType,
+        analysisResult
+      );
+
+      // Étape 3: Appliquer le formatage
+      const formatResult = await this.applyFormatting(
+        formatPreparation,
+        request.formatType
+      );
+
+      // Étape 4: Appliquer le changement dans l'UI
+      const uiResult = await this.applyUIChanges(
+        request.selectionData,
+        formatResult
+      );
+
+      // Étape 5: Finaliser
+      const finalResult = await this.finalizeOperation(
+        operationId,
+        uiResult,
+        startTime
+      );
+
+      this.updateStatistics(true, Date.now() - startTime);
+      return finalResult;
+
+    }, ErrorTypes.FORMATTING, { operationId, formatType: request.formatType });
+  }
+
+  /**
+   * Valide une requête de formatage
+   * @param {Object} request - La requête à valider
+   */
+  validateFormatRequest(request) {
+    if (!request) {
+      throw new ExtensionError(
+        'Format request is required',
+        ErrorTypes.FORMATTING,
+        ErrorSeverity.HIGH,
+        { request }
+      );
+    }
+
+    if (!request.selectionData) {
+      throw new ExtensionError(
+        'Selection data is required',
+        ErrorTypes.FORMATTING,
+        ErrorSeverity.HIGH,
+        { request: Object.keys(request) }
+      );
+    }
+
+    if (!request.formatType) {
+      throw new ExtensionError(
+        'Format type is required',
+        ErrorTypes.FORMATTING,
+        ErrorSeverity.HIGH,
+        { request: Object.keys(request) }
+      );
+    }
+
+    if (!request.selectionData.text) {
+      throw new ExtensionError(
+        'No text selected for formatting',
+        ErrorTypes.FORMATTING,
+        ErrorSeverity.MEDIUM,
+        { formatType: request.formatType }
+      );
+    }
+  }
+
+  /**
+   * Génère un ID unique pour l'opération
+   * @returns {string} - ID unique
+   */
+  generateOperationId() {
+    return `format_${++this.operationCounter}_${Date.now()}`;
+  }
+
+  /**
+   * Enregistre une opération
+   * @param {string} operationId - ID de l'opération
+   * @param {Object} request - Requête de formatage
+   */
+  registerOperation(operationId, request) {
+    this.activeOperations.set(operationId, {
+      id: operationId,
+      startTime: Date.now(),
+      formatType: request.formatType,
+      textLength: request.selectionData.text.length,
+      status: 'started'
+    });
+  }
+
+  /**
+   * Analyse la sélection pour préparer le formatage
+   * @param {Object} selectionData - Données de la sélection
+   * @returns {Promise<Object>} - Résultat de l'analyse
+   */
+  async analyzeSelection(selectionData) {
+    return errorHandler.safeExecute(async () => {
+      const text = selectionData.text;
+      const existingFormats = selectionData.existingFormats || 
+                            textFormatter.detectFormats(text);
+
+      const analysis = {
+        text,
+        length: text.length,
+        existingFormats,
+        hasFormats: existingFormats.length > 0,
+        field: selectionData.field,
+        fieldType: selectionData.fieldInfo?.tagName,
+        isContentEditable: selectionData.field?.contentEditable === 'true'
+      };
+
+      log('debug', 'Selection analysis completed', analysis);
+      return analysis;
+    }, ErrorTypes.FORMATTING, { operation: 'analyze' });
+  }
+
+  /**
+   * Prépare le formatage
+   * @param {Object} selectionData - Données de la sélection
+   * @param {string} formatType - Type de formatage
+   * @param {Object} analysisResult - Résultat de l'analyse
+   * @returns {Promise<Object>} - Préparation du formatage
+   */
+  async prepareFormatting(selectionData, formatType, analysisResult) {
+    return errorHandler.safeExecute(async () => {
+      // Vérifier les conflits potentiels
+      const conflicts = this.checkFormatConflicts(
+        analysisResult.existingFormats,
+        formatType
+      );
+
+      // Préparer la stratégie de formatage
+      const strategy = this.determineFormatStrategy(
+        formatType,
+        analysisResult.existingFormats,
+        conflicts
+      );
+
+      const preparation = {
+        text: analysisResult.text,
+        formatType,
+        existingFormats: analysisResult.existingFormats,
+        strategy,
+        conflicts,
+        field: selectionData.field,
+        range: selectionData.range
+      };
+
+      log('debug', 'Formatting preparation completed', {
+        formatType,
+        strategy,
+        conflicts: conflicts.length
+      });
+
+      return preparation;
+    }, ErrorTypes.FORMATTING, { operation: 'prepare', formatType });
+  }
+
+  /**
+   * Vérifie les conflits de formatage
+   * @param {Array} existingFormats - Formatages existants
+   * @param {string} newFormatType - Nouveau type de formatage
+   * @returns {Array} - Conflits trouvés
+   */
+  checkFormatConflicts(existingFormats, newFormatType) {
+    const conflicts = [];
+
+    existingFormats.forEach(format => {
+      if (format === newFormatType) {
+        conflicts.push({
+          type: 'duplicate',
+          format: format,
+          message: `Format ${format} already applied`
+        });
+      }
+    });
+
+    return conflicts;
+  }
+
+  /**
+   * Détermine la stratégie de formatage
+   * @param {string} formatType - Type de formatage
+   * @param {Array} existingFormats - Formatages existants
+   * @param {Array} conflicts - Conflits détectés
+   * @returns {string} - Stratégie à utiliser
+   */
+  determineFormatStrategy(formatType, existingFormats, conflicts) {
+    if (conflicts.length > 0) {
+      const hasDuplicate = conflicts.some(c => c.type === 'duplicate');
+      if (hasDuplicate) {
+        return 'toggle'; // Retirer le formatage s'il existe déjà
+      }
+    }
+
+    if (existingFormats.length === 0) {
+      return 'apply'; // Appliquer directement
+    }
+
+    return 'incremental'; // Formatage incrémental
+  }
+
+  /**
+   * Applique le formatage
+   * @param {Object} preparation - Préparation du formatage
+   * @param {string} formatType - Type de formatage
+   * @returns {Promise<Object>} - Résultat du formatage
+   */
+  async applyFormatting(preparation, formatType) {
+    return errorHandler.safeExecute(async () => {
+      let formattedText;
+
+      switch (preparation.strategy) {
+        case 'toggle':
+          // Retirer le formatage existant
+          formattedText = await textFormatter.removeAllFormats(preparation.text);
+          break;
+
+        case 'apply':
+          // Appliquer le formatage directement
+          formattedText = await textFormatter.applySimpleFormat(
+            preparation.text,
+            formatType
+          );
+          break;
+
+        case 'incremental':
+        default:
+          // Formatage incrémental
+          formattedText = await textFormatter.formatText(
+            preparation.text,
+            formatType,
+            preparation.existingFormats
+          );
+          break;
+      }
+
+      const result = {
+        originalText: preparation.text,
+        formattedText,
+        formatType,
+        strategy: preparation.strategy,
+        hasChanges: preparation.text !== formattedText
+      };
+
+      log('debug', 'Formatting applied', {
+        formatType,
+        strategy: preparation.strategy,
+        hasChanges: result.hasChanges
+      });
+
+      return result;
+    }, ErrorTypes.FORMATTING, { operation: 'apply', formatType });
+  }
+
+  /**
+   * Applique les changements dans l'UI
+   * @param {Object} selectionData - Données de la sélection
+   * @param {Object} formatResult - Résultat du formatage
+   * @returns {Promise<Object>} - Résultat de l'application UI
+   */
+  async applyUIChanges(selectionData, formatResult) {
+    return errorHandler.safeExecute(async () => {
+      if (!formatResult.hasChanges) {
+        return {
+          success: true,
+          message: 'No changes to apply',
+          formatResult
+        };
+      }
+
+      // Appliquer le changement selon le type de champ
+      if (selectionData.field.contentEditable === 'true') {
+        await this.applyContentEditableChange(
+          selectionData.field,
+          selectionData.range,
+          formatResult.formattedText
+        );
+      } else {
+        await this.applyInputFieldChange(
+          selectionData.field,
+          formatResult.formattedText
+        );
+      }
+
+      // Déclencher les événements LinkedIn
+      await this.triggerLinkedInEvents(selectionData.field);
+
+      return {
+        success: true,
+        message: 'Changes applied successfully',
+        formatResult
+      };
+    }, ErrorTypes.UI_INTERACTION, { fieldType: selectionData.fieldInfo?.tagName });
+  }
+
+  /**
+   * Applique les changements dans un champ contenteditable
+   * @param {HTMLElement} field - Le champ
+   * @param {Range} range - La range de sélection
+   * @param {string} newText - Le nouveau texte
+   */
+  async applyContentEditableChange(field, range, newText) {
+    return errorHandler.safeExecute(async () => {
+      range.deleteContents();
+      const textNode = document.createTextNode(newText);
+      range.insertNode(textNode);
+      
+      // Repositionner le curseur
+      range.setStartAfter(textNode);
+      range.setEndAfter(textNode);
+      
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      selection.collapseToEnd();
+    }, ErrorTypes.UI_INTERACTION, { operation: 'contenteditable' });
+  }
+
+  /**
+   * Applique les changements dans un champ input/textarea
+   * @param {HTMLElement} field - Le champ
+   * @param {string} newText - Le nouveau texte
+   */
+  async applyInputFieldChange(field, newText) {
+    return errorHandler.safeExecute(async () => {
+      const start = field.selectionStart;
+      const end = field.selectionEnd;
+      const value = field.value;
+      
+      field.value = value.substring(0, start) + newText + value.substring(end);
+      
+      // Repositionner le curseur
+      const newCursorPos = start + newText.length;
+      field.setSelectionRange(newCursorPos, newCursorPos);
+    }, ErrorTypes.UI_INTERACTION, { operation: 'input' });
+  }
+
+  /**
+   * Déclenche les événements LinkedIn
+   * @param {HTMLElement} field - Le champ
+   */
+  async triggerLinkedInEvents(field) {
+    return errorHandler.safeExecute(async () => {
+      const events = CONFIG.events.linkedinNotification;
+      
+      events.forEach(eventType => {
+        const event = new Event(eventType, {
+          bubbles: true,
+          cancelable: true
+        });
+        field.dispatchEvent(event);
+      });
+
+      field.focus();
+    }, ErrorTypes.UI_INTERACTION, { operation: 'events' });
+  }
+
+  /**
+   * Finalise une opération
+   * @param {string} operationId - ID de l'opération
+   * @param {Object} uiResult - Résultat de l'application UI
+   * @param {number} startTime - Temps de début
+   * @returns {Object} - Résultat final
+   */
+  async finalizeOperation(operationId, uiResult, startTime) {
+    return errorHandler.safeExecute(async () => {
+      const operation = this.activeOperations.get(operationId);
+      if (operation) {
+        operation.status = 'completed';
+        operation.endTime = Date.now();
+        operation.duration = operation.endTime - startTime;
+      }
+
+      // Nettoyer l'opération après un délai
+      setTimeout(() => {
+        this.activeOperations.delete(operationId);
+      }, 5000);
+
+      log('info', 'Format operation completed', {
+        operationId,
+        duration: operation?.duration,
+        success: uiResult.success
+      });
+
+      return {
+        operationId,
+        success: uiResult.success,
+        message: uiResult.message,
+        duration: operation?.duration,
+        formatResult: uiResult.formatResult
+      };
+    }, ErrorTypes.FORMATTING, { operationId });
+  }
+
+  /**
+   * Met à jour les statistiques
+   * @param {boolean} success - Succès de l'opération
+   * @param {number} duration - Durée de l'opération
+   */
+  updateStatistics(success, duration) {
+    this.statistics.totalOperations++;
+    
+    if (success) {
+      this.statistics.successfulOperations++;
+    } else {
+      this.statistics.failedOperations++;
+    }
+
+    // Calcul de la moyenne mobile
+    const currentAvg = this.statistics.averageProcessingTime;
+    const newAvg = (currentAvg + duration) / 2;
+    this.statistics.averageProcessingTime = Math.round(newAvg);
+  }
+
+  /**
+   * Obtient les statistiques
+   * @returns {Object} - Statistiques de l'orchestrateur
+   */
+  getStatistics() {
+    return {
+      ...this.statistics,
+      activeOperations: this.activeOperations.size,
+      successRate: this.statistics.totalOperations > 0 
+        ? (this.statistics.successfulOperations / this.statistics.totalOperations * 100).toFixed(2)
+        : 0
+    };
+  }
+
+  /**
+   * Obtient les opérations actives
+   * @returns {Array} - Liste des opérations actives
+   */
+  getActiveOperations() {
+    return Array.from(this.activeOperations.values());
+  }
+
+  /**
+   * Nettoie les ressources
+   */
+  cleanup() {
+    this.activeOperations.clear();
+    this.statistics = {
+      totalOperations: 0,
+      successfulOperations: 0,
+      failedOperations: 0,
+      averageProcessingTime: 0
+    };
+    log();
+  }
+}
+
+// Instance globale
+const formatOrchestrator = new FormatOrchestrator();
+
+// LinkedIn Formateur Toolbox - Format Handler
+// Gestionnaire spécialisé pour l'application du formatage
+
+
+/**
+ * Classe spécialisée pour la gestion du formatage
+ */
+class FormatHandler {
+  constructor() {
+    this.activeFormats = new Map();
+  }
+
+  /**
+   * Applique le formatage au texte sélectionné
+   */
+  async applyFormatting(selectionData, formatType) {
+    return errorHandler.safeExecute(async () => {
+      // Valider les paramètres
+      if (!selectionData || !formatType) {
+        throw new ExtensionError(
+          'Invalid parameters for formatting',
+          ErrorTypes.FORMATTING,
+          ErrorSeverity.MEDIUM,
+          { selectionData: !!selectionData, formatType }
+        );
+      }
+
+      if (!selectionData.text || selectionData.text.length === 0) {
+        throw new ExtensionError(
+          'No text selected for formatting',
+          ErrorTypes.FORMATTING,
+          ErrorSeverity.LOW,
+          { formatType }
+        );
+      }
+
+      log('info', 'Delegating formatting to orchestrator', { 
+        formatType, 
+        textLength: selectionData.text.length
+      });
+      
+      // Utiliser l'orchestrateur pour gérer le formatage complet
+      const result = await formatOrchestrator.orchestrateFormatting({
+        selectionData,
+        formatType
+      });
+
+      return result.success;
+
+    }, ErrorTypes.FORMATTING, { formatType, textLength: selectionData?.text?.length });
+  }
+
+  /**
+   * Remplace le texte sélectionné dans le champ LinkedIn
+   */
+  async replaceSelectedText(selectionData, newText) {
+    return errorHandler.safeExecute(async () => {
+      const field = selectionData.field;
+      const range = selectionData.range;
+
+      if (!field) {
+        throw new ExtensionError(
+          'No field found for text replacement',
+          ErrorTypes.TEXT_REPLACEMENT,
+          ErrorSeverity.HIGH,
+          { newText: newText.substring(0, 50) }
+        );
+      }
+
+      // Méthode 1: Pour les éléments contenteditable (posts, commentaires)
+      if (field.contentEditable === 'true') {
+        await this.handleContentEditableField(field, range, newText);
+      // Méthode 2: Pour les textarea et input
+      } else if (field.tagName === 'TEXTAREA' || field.tagName === 'INPUT') {
+        await this.handleInputField(field, newText);
+      } else {
+        throw new ExtensionError(
+          'Unsupported field type for text replacement',
+          ErrorTypes.TEXT_REPLACEMENT,
+          ErrorSeverity.MEDIUM,
+          { fieldType: field.tagName, fieldId: field.id }
+        );
+      }
+
+    }, ErrorTypes.TEXT_REPLACEMENT, { fieldType: selectionData.field?.tagName });
+  }
+
+  /**
+   * Gère les champs contenteditable
+   */
+  async handleContentEditableField(field, range, newText) {
+    return errorHandler.safeExecute(async () => {
+      if (!range) {
+        throw new ExtensionError(
+          'No range provided for contenteditable field',
+          ErrorTypes.TEXT_REPLACEMENT,
+          ErrorSeverity.HIGH,
+          { fieldId: field.id }
+        );
+      }
+
+      // Supprimer le contenu sélectionné et insérer le nouveau texte
+      range.deleteContents();
+      const textNode = document.createTextNode(newText);
+      range.insertNode(textNode);
+      
+      // Repositionner le curseur après le texte inséré
+      range.setStartAfter(textNode);
+      range.setEndAfter(textNode);
+      
+      // Effacer la sélection
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      window.getSelection().collapseToEnd();
+
+      // Déclencher les événements pour notifier LinkedIn
+      await this.triggerLinkedInEvents(field);
+
+    }, ErrorTypes.TEXT_REPLACEMENT, { fieldType: 'contenteditable', fieldId: field.id });
+  }
+
+  /**
+   * Gère les champs input/textarea
+   */
+  async handleInputField(field, newText) {
+    return errorHandler.safeExecute(async () => {
+      const start = field.selectionStart;
+      const end = field.selectionEnd;
+      const value = field.value;
+      
+      if (start === null || end === null) {
+        throw new ExtensionError(
+          'No selection found in input field',
+          ErrorTypes.TEXT_REPLACEMENT,
+          ErrorSeverity.MEDIUM,
+          { fieldId: field.id, fieldType: field.tagName }
+        );
+      }
+      
+      // Remplacer le texte sélectionné
+      field.value = value.substring(0, start) + newText + value.substring(end);
+      
+      // Repositionner le curseur
+      const newCursorPos = start + newText.length;
+      field.setSelectionRange(newCursorPos, newCursorPos);
+      
+      // Déclencher les événements
+      await this.triggerLinkedInEvents(field);
+
+    }, ErrorTypes.TEXT_REPLACEMENT, { fieldType: field.tagName, fieldId: field.id });
+  }
+
+  /**
+   * Déclenche les événements nécessaires pour notifier LinkedIn des changements
+   */
+  async triggerLinkedInEvents(field) {
+    return errorHandler.safeExecute(async () => {
+      // Événements de base pour notifier les changements
+      const events = CONFIG.events.linkedinNotification;
+      
+      events.forEach(eventType => {
+        try {
+          const event = new Event(eventType, {
+            bubbles: true,
+            cancelable: true
+          });
+          field.dispatchEvent(event);
+        } catch (error) {
+          throw new ExtensionError(
+            `Failed to dispatch event: ${eventType}`,
+            ErrorTypes.UI_INTERACTION,
+            ErrorSeverity.LOW,
+            { eventType, fieldId: field.id, error: error.message }
+          );
+        }
+      });
+
+      // Focus sur le champ pour maintenir l'état actif
+      try {
+        field.focus();
+      } catch (error) {
+        throw new ExtensionError(
+          'Failed to focus field after text replacement',
+          ErrorTypes.UI_INTERACTION,
+          ErrorSeverity.LOW,
+          { fieldId: field.id, error: error.message }
+        );
+      }
+
+    }, ErrorTypes.UI_INTERACTION, { fieldId: field.id });
+  }
+
+  /**
+   * Détecte les formatages existants dans le texte
+   */
+  detectExistingFormats(text) {
+    return detectFormatting(text);
+  }
+}
+
+// Instance globale pour l'extension
+const formatHandler = new FormatHandler();
+
 // LinkedIn Formateur Toolbox - Content Script
 // Ce script sera injecté sur toutes les pages LinkedIn
 
@@ -1420,13 +2696,17 @@ class LinkedInFormatterToolbox {
       return;
     }
 
-    try {
-      log('info', 'Initializing LinkedIn Formatter Toolbox');
+    return errorHandler.safeExecute(async () => {
+      log();
       
       // Vérifier qu'on est bien sur LinkedIn
       if (!this.isLinkedInPage()) {
-        log('warn', 'Not on LinkedIn page, skipping initialization');
-        return;
+        throw new ExtensionError(
+          'Not on LinkedIn page, skipping initialization',
+          ErrorTypes.INITIALIZATION,
+          ErrorSeverity.LOW,
+          { hostname: window.location.hostname }
+        );
       }
 
       // Initialiser le détecteur de sélection
@@ -1439,11 +2719,9 @@ class LinkedInFormatterToolbox {
       this.registerFormatHandlers();
 
       this.isInitialized = true;
-      log('info', 'LinkedIn Formatter Toolbox initialized successfully');
+      log();
 
-    } catch (error) {
-      log('error', 'Failed to initialize extension', error);
-    }
+    }, ErrorTypes.INITIALIZATION, { hostname: window.location.hostname });
   }
 
   /**
@@ -1532,100 +2810,21 @@ class LinkedInFormatterToolbox {
   }
 
   /**
-   * Applique le formatage au texte sélectionné avec comportement simplifié
+   * Applique le formatage au texte sélectionné
    */
-  applyFormatting(selectionData, formatType) {
-    try {
-      const existingFormats = selectionData.existingFormats || [];
-      
-      log('info', 'Applying formatting', { 
-        formatType, 
-        existingFormats,
-        textLength: selectionData.text.length
-      });
-      
-      // Utiliser la logique simplifiée pour tous les cas
-      const formattedText = applyIncrementalFormatting(
-        selectionData.text, 
-        existingFormats, 
-        formatType
-      );
-
-      // Remplacer le texte sélectionné
-      this.replaceSelectedText(selectionData, formattedText);
-
-    } catch (error) {
-      log('error', 'Failed to apply formatting', { formatType, error });
-    }
-  }
-
-  /**
-   * Remplace le texte sélectionné dans le champ LinkedIn
-   */
-  replaceSelectedText(selectionData, newText) {
-    try {
-      const field = selectionData.field;
-      const range = selectionData.range;
-
-      // Méthode 1: Pour les éléments contenteditable (posts, commentaires)
-      if (field.contentEditable === 'true') {
-        // Supprimer le contenu sélectionné et insérer le nouveau texte
-        range.deleteContents();
-        const textNode = document.createTextNode(newText);
-        range.insertNode(textNode);
-        
-        // Repositionner le curseur après le texte inséré
-        range.setStartAfter(textNode);
-        range.setEndAfter(textNode);
-        
-        // Effacer la sélection
-        window.getSelection().removeAllRanges();
-        window.getSelection().addRange(range);
-        window.getSelection().collapseToEnd();
-
-        // Déclencher les événements pour notifier LinkedIn
-        this.triggerLinkedInEvents(field);
-
-      // Méthode 2: Pour les textarea et input
-      } else if (field.tagName === 'TEXTAREA' || field.tagName === 'INPUT') {
-        const start = field.selectionStart;
-        const end = field.selectionEnd;
-        const value = field.value;
-        
-        // Remplacer le texte sélectionné
-        field.value = value.substring(0, start) + newText + value.substring(end);
-        
-        // Repositionner le curseur
-        const newCursorPos = start + newText.length;
-        field.setSelectionRange(newCursorPos, newCursorPos);
-        
-        // Déclencher les événements
-        this.triggerLinkedInEvents(field);
-
+  async applyFormatting(selectionData, formatType) {
+    return errorHandler.safeExecute(async () => {
+      if (!selectionData || !formatType) {
+        throw new ExtensionError(
+          'Invalid parameters for applyFormatting',
+          ErrorTypes.FORMATTING,
+          ErrorSeverity.MEDIUM,
+          { hasSelectionData: !!selectionData, formatType }
+        );
       }
 
-    } catch (error) {
-      log('error', 'Failed to replace selected text', error);
-    }
-  }
-
-  /**
-   * Déclenche les événements nécessaires pour notifier LinkedIn des changements
-   */
-  triggerLinkedInEvents(field) {
-    // Événements de base pour notifier les changements
-    const events = ['input', 'change', 'keyup'];
-    
-    events.forEach(eventType => {
-      const event = new Event(eventType, {
-        bubbles: true,
-        cancelable: true
-      });
-      field.dispatchEvent(event);
-    });
-
-    // Focus sur le champ pour maintenir l'état actif
-    field.focus();
+      return await formatHandler.applyFormatting(selectionData, formatType);
+    }, ErrorTypes.FORMATTING, { formatType });
   }
 
   /**
