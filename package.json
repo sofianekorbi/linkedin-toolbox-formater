@@ -50,7 +50,6 @@
     "version": "1.0.0",
     "description": "Formatez votre texte directement sur LinkedIn avec une toolbox flottante",
     "permissions": [
-      "activeTab"
     ],
     "host_permissions": [
       "*://*.linkedin.com/*"

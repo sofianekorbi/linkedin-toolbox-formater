@@ -1,11 +1,11 @@
 {
-  "timestamp": "2025-07-16T11:11:40.210Z",
+  "timestamp": "2025-07-21T10:11:13.872Z",
   "version": "1.0.0",
   "files": {
     "zip": {
       "path": "/Users/sofiane/Software/chrome-ext-linkedin-formater/build/linkedin-formateur-toolbox-v1.0.0.zip",
       "exists": true,
-      "size": 91551
+      "size": 142055
     },
     "crx": {
       "path": "/Users/sofiane/Software/chrome-ext-linkedin-formater/build/linkedin-formateur-toolbox-v1.0.0.crx",

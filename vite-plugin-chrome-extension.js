@@ -15,7 +15,6 @@ export function chromeExtensionPlugin() {
         version: packageJson.version,
         description: packageJson.description,
         permissions: [
-          "activeTab"
         ],
         host_permissions: [
           "*://*.linkedin.com/*"
@@ -40,9 +39,9 @@ export function chromeExtensionPlugin() {
           default_title: packageJson.displayName || packageJson.name
         },
         icons: {
-          16: "assets/icons/icon.svg",
-          48: "assets/icons/icon.svg",
-          128: "assets/icons/icon.svg"
+          16: "assets/icons/icon-16.png",
+          48: "assets/icons/icon-48.png",
+          128: "assets/icons/icon-128.png"
         }
       };
 
@@ -69,13 +68,18 @@ export function chromeExtensionPlugin() {
       const sourceIconsDir = resolve('assets/icons');
       if (existsSync(sourceIconsDir)) {
         try {
-          copyFileSync(resolve(sourceIconsDir, 'icon.svg'), resolve(iconsDir, 'icon.svg'));
+          // Copier les icônes PNG dans les bonnes tailles
+          const iconSizes = ['16', '48', '128'];
+          iconSizes.forEach(size => {
+            const sourceFile = resolve(sourceIconsDir, `icon-${size}.png`);
+            const destFile = resolve(iconsDir, `icon-${size}.png`);
+            if (existsSync(sourceFile)) {
+              copyFileSync(sourceFile, destFile);
+            }
+          });
           console.log('✅ Icônes copiées');
         } catch (error) {
-          console.log('⚠️ Icônes non trouvées, création de placeholders');
-          // Créer des icônes placeholder si elles n'existent pas
-          const placeholderIcon = 'data:image/svg+xml;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-          writeFileSync(resolve(iconsDir, 'icon.svg'), placeholderIcon);
+          console.log('⚠️ Erreur lors de la copie des icônes:', error.message);
         }
       }
 
